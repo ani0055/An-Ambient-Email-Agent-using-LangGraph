@@ -1,0 +1,102 @@
+[
+  {
+    "id": "email_input_1",
+    "author": "Legal Department <legal@company.com>",
+    "to": "Lance Martin <lance@company.com>",
+    "subject": "Confidential: Review of new NDA template",
+    "email_thread": "Dear Lance,\n\nOur legal team has drafted a new Non-Disclosure Agreement template for use with external vendors. As a technical lead, we need your review of sections 4.2 and 5.1 (Intellectual Property and Confidential Information handling).\n\nPlease provide your feedback by end of day Thursday. This is a high-priority item.\n\nBest regards,\nLegal Department",
+    "ground_truth_triage": "notify",
+    "response_criteria": "• No response needed\n• This is a legal/confidential document requiring human review",
+    "expected_tool_calls": []
+  },
+  {
+    "id": "email_input_2",
+    "author": "Travel Agency <bookings@travelcorp.com>",
+    "to": "Lance Martin <lance@company.com>",
+    "subject": "Your upcoming business trip to Singapore",
+    "email_thread": "Hello Lance,\n\nWe've received your travel request for Singapore next month. Here are the proposed options:\n\nFlight: Business class, Singapore Airlines, March 15-22\nHotel: Marina Bay Sands, Executive Suite\n\nTotal cost: $8,500\n\nPlease confirm these arrangements by Monday, or let us know if you'd like alternative options.\n\nSafe travels,\nTravel Agency Team",
+    "ground_truth_triage": "respond",
+    "response_criteria": "• Confirm travel arrangements or request alternatives\n• Send email with write_email tool call to confirm Singapore travel arrangements",
+    "expected_tool_calls": ["write_email", "done"]
+  },
+  {
+    "id": "email_input_3",
+    "author": "University Alumni <alumni@university.edu>",
+    "to": "Lance Martin <lance@company.com>",
+    "subject": "Class of 2015 - 10 Year Reunion Invitation",
+    "email_thread": "Dear Lance,\n\nMark your calendar! The Class of 2015 10-Year Reunion is scheduled for June 20-22, 2025 at the campus quad.\n\nWe have exciting activities planned:\n- Campus tour and department visits\n- Networking dinner with faculty\n- Alumni achievement awards\n- Family picnic on Sunday\n\nEarly registration discount available until April 30th.\n\nHope to see you there!\n\nWarmly,\nAlumni Association",
+    "ground_truth_triage": "ignore",
+    "response_criteria": "• No response needed\n• This is a promotional alumni event email",
+    "expected_tool_calls": []
+  },
+  {
+    "id": "email_input_4",
+    "author": "Security Team <security@company.com>",
+    "to": "Lance Martin <lance@company.com>",
+    "subject": "URGENT: Unusual login activity detected",
+    "email_thread": "SECURITY ALERT\n\nWe've detected unusual login activity on your account:\n\n- Location: Tokyo, Japan\n- Time: 03:15 AM EST\n- Device: Unknown Android device\n\nIf this was not you, please:\n1. Change your password immediately\n2. Enable 2-factor authentication\n3. Contact security team\n\nIf this was you, please disregard this alert.\n\nDo NOT reply to this automated message.",
+    "ground_truth_triage": "notify",
+    "response_criteria": "• No response needed\n• This is a critical security alert requiring immediate human attention",
+    "expected_tool_calls": []
+  },
+  {
+    "id": "email_input_5",
+    "author": "Product Manager <product@startup.com>",
+    "to": "Lance Martin <lance@company.com>",
+    "subject": "Beta testing invitation for new AI tool",
+    "email_thread": "Hi Lance,\n\nWe're building an AI-powered code review tool and would love your expert feedback. Given your experience with ML systems, you'd be an ideal beta tester.\n\nThe beta program includes:\n- Early access to the platform\n- $500 AWS credits\n- Direct access to our engineering team\n- 6-month free subscription upon launch\n\nWould you be interested in participating? The program starts next Monday.\n\nBest,\nProduct Manager",
+    "ground_truth_triage": "respond",
+    "response_criteria": "• Express interest in beta testing\n• Ask about time commitment\n• Send email with write_email tool call to express interest in AI code review tool beta testing",
+    "expected_tool_calls": ["write_email", "done"]
+  },
+  {
+    "id": "email_input_6",
+    "author": "CEO Office <ceo-office@company.com>",
+    "to": "Lance Martin <lance@company.com>",
+    "subject": "Direct request from CEO: Board presentation",
+    "email_thread": "Lance,\n\nThe CEO has specifically requested your participation in the Q2 Board of Directors presentation on April 15th.\n\nShe'd like you to present the technical architecture section of Project Phoenix (15 minutes).\n\nPlease let us know your availability for a dry run next week. We suggest Tuesday 2PM or Thursday 10AM.\n\nThis is a priority request.\n\nRegards,\nCEO Office",
+    "ground_truth_triage": "respond",
+    "response_criteria": "• Check calendar for dry run availability\n• Confirm participation in board presentation\n• Send email with write_email tool call to confirm board presentation participation and provide availability for dry run",
+    "expected_tool_calls": ["check_calendar_availability", "write_email", "done"]
+  },
+  {
+    "id": "email_input_7",
+    "author": "Conference Speaker <speakers@ai-conference.org>",
+    "to": "Lance Martin <lance@company.com>",
+    "subject": "Your talk proposal has been accepted!",
+    "email_thread": "Congratulations Lance!\n\nYour talk proposal 'Building Autonomous Agents with LangGraph' has been accepted for AI Conference 2025.\n\nDetails:\n- Date: September 25, 2025\n- Time: 11:00 AM - 12:00 PM\n- Format: 45-minute talk + 15-minute Q&A\n- Venue: Main Hall\n\nNext steps:\n1. Confirm your participation by April 10th\n2. Submit final abstract by May 15th\n3. Schedule a speaker briefing\n\nPlease reply to confirm.\n\nExcited to have you!\nConference Committee",
+    "ground_truth_triage": "respond",
+    "response_criteria": "• Confirm conference talk participation\n• Schedule speaker briefing\n• Send email with write_email tool call to confirm AI Conference talk acceptance",
+    "expected_tool_calls": ["write_email", "done"]
+  },
+  {
+    "id": "email_input_8",
+    "author": "IT Support <helpdesk@company.com>",
+    "to": "Lance Martin <lance@company.com>",
+    "subject": "Your laptop upgrade is scheduled",
+    "email_thread": "Hello Lance,\n\nYour laptop upgrade request has been approved and scheduled:\n\nDate: Next Tuesday, March 18th\nTime: 10:00 AM - 12:00 PM\nLocation: IT Department, Building C\nNew Device: MacBook Pro M3 Max, 64GB RAM, 2TB SSD\n\nPlease ensure to:\n1. Back up all data before the appointment\n2. Bring your current laptop and charger\n3. Allow 2 hours for setup and data transfer\n\nIf this time doesn't work, please reply with alternative availability.\n\nIT Support Team",
+    "ground_truth_triage": "notify",
+    "response_criteria": "• No response needed unless rescheduling required\n• This is a scheduled maintenance notification",
+    "expected_tool_calls": []
+  },
+  {
+    "id": "email_input_9",
+    "author": "Vendor Partnership <partnerships@techvendor.com>",
+    "to": "Lance Martin <lance@company.com>",
+    "subject": "Partnership opportunity: Integration development",
+    "email_thread": "Dear Lance,\n\nWe're reaching out regarding a potential partnership opportunity. Our company specializes in enterprise AI tools, and we've been following your work with LangGraph.\n\nWe're interested in:\n1. Co-developing an integration between our platforms\n2. Joint webinar or whitepaper\n3. Potential revenue sharing arrangement\n\nWould you be open to a 30-minute introductory call next week to discuss possibilities?\n\nLooking forward to collaborating,\nPartnerships Director",
+    "ground_truth_triage": "respond",
+    "response_criteria": "• Express interest in partnership discussion\n• Check calendar for 30-minute meeting availability\n• Send email with write_email tool call to express interest in partnership discussion and provide availability",
+    "expected_tool_calls": ["check_calendar_availability", "write_email", "done"]
+  },
+  {
+    "id": "email_input_10",
+    "author": "Neighborhood Association <board@neighborhood.org>",
+    "to": "Lance Martin <lance@company.com>",
+    "subject": "Important: Annual HOA meeting and budget vote",
+    "email_thread": "Dear Resident,\n\nThe Annual Homeowners Association Meeting is scheduled for April 10th at 7:00 PM in the community clubhouse.\n\nKey agenda items:\n1. 2025-2026 Budget approval (includes 5% increase for maintenance)\n2. Pool renovation project vote\n3. New board member elections\n4. Security camera installation proposal\n\nYour attendance and vote are important. Proxy voting forms are available if you cannot attend.\n\nSincerely,\nHOA Board",
+    "ground_truth_triage": "ignore",
+    "response_criteria": "• No response needed\n• This is a community announcement/bulk email",
+    "expected_tool_calls": []
+  }
+]
