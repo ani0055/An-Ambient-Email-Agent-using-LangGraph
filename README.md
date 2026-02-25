@@ -30,6 +30,7 @@ An intelligent email assistant that monitors your Gmail inbox, analyzes incoming
 
 ## 🏗️ Architecture
 
+<img width="1049" height="238" alt="overview-removebg-preview" src="https://github.com/user-attachments/assets/baa6e3ca-803e-4130-b97c-dade041bf188" />
 
 
 ## 🚀 Quick Start
