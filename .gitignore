@@ -1,5 +1,5 @@
 # =========================================================
-# 🐍 Python Cache & Compiled Files
+# Python Cache & Compiled Files
 # =========================================================
 __pycache__/
 *.pyc
@@ -32,7 +32,7 @@ test_inputs/
 results/
 
 # =========================================================
-# 🧠 LangGraph / Studio Runtime Files
+# LangGraph / Studio Runtime Files
 # =========================================================
 .langgraph_api/
 
