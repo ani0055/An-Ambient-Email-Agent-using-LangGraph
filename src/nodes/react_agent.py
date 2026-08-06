@@ -7,7 +7,7 @@ import json
 
 # Use lower temperature for more consistent rule-following
 llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
+    model="gemini-3.6-flash",
     temperature=0.1,
     convert_system_message_to_human=True
 )

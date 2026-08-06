@@ -1,35 +1,38 @@
-# Core LangChain stack (let langchain manage langchain-core)
-langchain==0.1.20
-langchain-google-genai==0.0.11
-langsmith>=0.1.17,<0.2.0
-langchain-community==0.0.38
+# Core LangChain stack
+langchain
+langchain-core
+langchain-community
+langchain-google-genai
 
+# LangSmith (tracing/observability, pulled in by langchain-core)
+langsmith
 
-# LangGraph (stable 0.0.x for manual ReAct)
-langgraph<0.1.0
+# LangGraph (1.0 stable — note: langgraph.prebuilt is deprecated,
+# use langchain.agents / create_react_agent going forward)
+langgraph
 
-# Google Gemini SDK
-google-generativeai>=0.4.1,<0.5.0
+# Google Gemini SDK (legacy generativeai SDK, matches langchain-google-genai 2.x)
+google-generativeai
 
-# Google APIs (Gmail / Calendar later)
-google-api-python-client==2.116.0
-google-auth-httplib2==0.2.0
-google-auth-oauthlib==1.2.0
+# Google APIs (Gmail / Calendar)
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
 
-# Web framework (HITL later)
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-jinja2==3.1.3
-python-multipart==0.0.6
-websockets==12.0
+# Web framework (HITL)
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+websockets
 
 # Database
-aiosqlite==0.19.0
+aiosqlite
 
 # Utilities
-python-dotenv==1.0.1
-pydantic==2.6.1
-httpx==0.26.0
-email-validator==2.1.0
-pytz==2024.1
-protobuf>=4.25.3,<5.0.0
+python-dotenv
+pydantic
+httpx
+email-validator
+pytz
+protobuf

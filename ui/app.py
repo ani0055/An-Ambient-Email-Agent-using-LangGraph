@@ -67,7 +67,7 @@ async def startup_event():
 @app.get("/")
 async def get_ui(request: Request):
     """Serve the main HITL interface."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html", {})
 
 
 @app.websocket("/ws")

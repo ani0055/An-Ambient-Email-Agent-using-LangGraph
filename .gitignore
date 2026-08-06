@@ -7,7 +7,7 @@ __pycache__/
 *.pyd
 
 # Virtual Environments
-venv/
+myenv/
 inbox_env/
 .env/
 

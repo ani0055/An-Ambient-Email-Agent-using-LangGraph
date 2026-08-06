@@ -3,7 +3,7 @@ from langchain_core.prompts import PromptTemplate
 from src.agents.state import EmailAgentState
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
+    model="gemini-3.6-flash",
     temperature=0,
     convert_system_message_to_human=True
 )
@@ -179,7 +179,8 @@ def triage_node(state: EmailAgentState) -> EmailAgentState:
     # Parse response
     decision = None
     reasoning = None
-    
+
+    content = extract_text_content(response.content)
     for line in content.strip().split('\n'):
         if "DECISION:" in line:
             decision = line.split(":", 1)[1].strip().lower()
@@ -208,3 +209,17 @@ def triage_node(state: EmailAgentState) -> EmailAgentState:
         "triage_decision": decision,
         "triage_reasoning": reasoning
     }
+
+def extract_text_content(content):
+    """Gemini sometimes returns content as a string, sometimes as a list of blocks."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict) and "text" in block:
+                parts.append(block["text"])
+        return "\n".join(parts)
+    return str(content)
