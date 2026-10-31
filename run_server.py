@@ -62,19 +62,31 @@ def process_incoming_email(email_data: dict):
         "workflow_id": email_data['id']
     }
     
-    print(f"\n📥 Creating concurrent task for email processing...")
+    print(f"\n📥 Creating concurrent task for email processing...", flush=True)
     
     # ✅ FIX: Create a task instead of using a queue
     # This allows multiple emails to be processed concurrently
-    asyncio.run_coroutine_threadsafe(
+    future = asyncio.run_coroutine_threadsafe(
         run_agent_workflow(
             workflow_id=agent_input['workflow_id'],
             email_data=agent_input
         ),
         background_loop
     )
+
+    def _task_done_callback(fut):
+        try:
+            exc = fut.exception()
+            if exc:
+                print(f"\n❌ Error in background email task for {agent_input['email_id']}: {exc}", flush=True)
+                import traceback
+                traceback.print_exception(type(exc), exc, exc.__traceback__)
+        except Exception as e:
+            print(f"Error checking future result: {e}", flush=True)
+
+    future.add_done_callback(_task_done_callback)
     
-    print(f"   ✅ Task created - email will process in background")
+    print(f"   ✅ Task created - email will process in background", flush=True)
 
 def start_ui_server():
     """Start FastAPI UI server in background thread."""
@@ -155,13 +167,13 @@ def main():
     
     # 7. Start Gmail poller
     print("\n7️⃣  Starting Gmail poller...")
-    poller = GmailPoller(gmail_service=gmail_service, poll_interval=60)
+    poller = GmailPoller(gmail_service=gmail_service, poll_interval=20)
     
     print("\n" + "="*70)
     print("🎯 EMAIL AGENT IS NOW LIVE!")
     print("="*70)
     print("📧 Monitoring Gmail inbox for new emails")
-    print("🔄 Checking every 60 seconds")
+    print("🔄 Checking every 20 seconds")
     print("🌐 HITL Dashboard: http://localhost:8000")
     print("⚡ Multiple emails will process concurrently")
     print("\nPress Ctrl+C to stop")

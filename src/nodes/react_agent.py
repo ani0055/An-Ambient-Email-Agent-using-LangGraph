@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from src.agents.state import EmailAgentState
 from src.tools.google_tools import get_google_tools
@@ -5,10 +7,16 @@ from datetime import datetime, timedelta
 from langchain_core.messages import SystemMessage, HumanMessage
 import json
 
+load_dotenv()
+
+model_name = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+
 # Use lower temperature for more consistent rule-following
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3.6-flash",
+    model=model_name,
     temperature=0.1,
+    timeout=45,
+    max_retries=2,
     convert_system_message_to_human=True
 )
 

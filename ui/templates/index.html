@@ -3,820 +3,2561 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Agent - HITL Dashboard</title>
+    <title>MailMind — Ambient Email Agent & HITL Command Hub</title>
+    <meta name="description" content="Ambient AI Email Assistant powered by LangGraph, Gmail API, and Human-In-The-Loop approval intelligence.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        :root {
+            /* Design Tokens: Dark Theme (Default) */
+            --bg-base: #0a0d14;
+            --bg-surface: #101522;
+            --bg-elevated: #161c2e;
+            --bg-glass: rgba(22, 28, 46, 0.75);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.16);
+            --border-glow: rgba(99, 102, 241, 0.35);
+
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --text-inverse: #0a0d14;
+
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: rgba(99, 102, 241, 0.15);
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            
+            --success: #10b981;
+            --success-light: rgba(16, 185, 129, 0.15);
+            --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+
+            --warning: #f59e0b;
+            --warning-light: rgba(245, 158, 11, 0.15);
+            --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+
+            --danger: #ef4444;
+            --danger-light: rgba(239, 68, 68, 0.15);
+            --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+
+            --info: #0ea5e9;
+            --info-light: rgba(14, 165, 233, 0.15);
+
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
+            --radius-full: 9999px;
+
+            --shadow-subtle: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 35px -5px rgba(99, 102, 241, 0.25);
+            --shadow-warning: 0 0 30px -5px rgba(245, 158, 11, 0.3);
+
+            --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', Consolas, Monaco, monospace;
+
+            --transition-smooth: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        [data-theme="light"] {
+            --bg-base: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f1f5f9;
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            --border-subtle: rgba(0, 0, 0, 0.08);
+            --border-strong: rgba(0, 0, 0, 0.14);
+            --border-glow: rgba(99, 102, 241, 0.3);
+
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --text-inverse: #ffffff;
+
+            --shadow-subtle: 0 4px 20px -2px rgba(0, 0, 0, 0.06);
+            --shadow-glow: 0 0 30px -5px rgba(99, 102, 241, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f2f5;
-            color: #333;
-        }
-        
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px 30px;
+            font-family: var(--font-sans);
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            overflow-x: hidden;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Subtle Background Atmosphere */
+        .ambient-glow {
+            position: fixed;
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.06) 45%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* App Header */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            background: var(--bg-glass);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 12px 28px;
+            display: flex;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-        
-        .header h1 { font-size: 24px; }
-        
-        .status-badge {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: bold;
-        }
-        
-        .status-connected { background: #28a745; color: white; }
-        .status-disconnected { background: #dc3545; color: white; }
-        
-        /* Main Layout */
-        .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            justify-content: space-between;
             gap: 20px;
-            padding: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
         }
-        
-        /* Cards */
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: inherit;
         }
-        
-        .card h2 {
-            font-size: 18px;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f0f2f5;
-            color: #444;
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-md);
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            position: relative;
         }
-        
-        /* Email Form */
-        .form-group {
-            margin-bottom: 15px;
+
+        .brand-icon svg {
+            width: 22px;
+            height: 22px;
+            color: white;
         }
-        
-        label {
-            display: block;
+
+        .brand-titles {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-name {
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--text-primary) 30%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-pill {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            -webkit-text-fill-color: var(--primary);
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Ambient Radar Status */
+        .ambient-status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
             font-size: 13px;
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 5px;
+            font-weight: 500;
         }
-        
-        input, textarea {
-            width: 100%;
-            padding: 10px 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.2s;
-            font-family: inherit;
+
+        .radar-pulse {
+            position: relative;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
         }
-        
-        input:focus, textarea:focus {
-            border-color: #667eea;
-            outline: none;
+
+        .radar-pulse::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border-radius: 50%;
+            border: 2px solid var(--success);
+            animation: radarRipple 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+            opacity: 0.8;
         }
-        
-        textarea { min-height: 100px; resize: vertical; }
-        
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
+
+        @keyframes radarRipple {
+            0% { transform: scale(0.6); opacity: 1; }
+            100% { transform: scale(2.4); opacity: 0; }
+        }
+
+        .radar-paused {
+            background: var(--warning);
+        }
+        .radar-paused::after {
+            display: none;
+        }
+
+        /* Header Quick Actions */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
-            width: 100%;
+            transition: var(--transition-smooth);
+            user-select: none;
         }
-        
-        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .btn:active { transform: translateY(0); }
-        
-        .btn-primary { background: #667eea; color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-danger { background: #dc3545; color: white; }
-        .btn-warning { background: #ffc107; color: #333; }
-        .btn-secondary { background: #6c757d; color: white; }
-        
-        /* Activity Feed */
-        .activity-feed {
-            max-height: 400px;
-            overflow-y: auto;
+
+        .btn-action:hover {
+            background: var(--bg-elevated);
+            border-color: var(--border-strong);
+            transform: translateY(-1px);
         }
-        
-        .activity-item {
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 8px;
+
+        .btn-action:active {
+            transform: translateY(0);
+        }
+
+        .btn-action.btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            box-shadow: 0 2px 12px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-action.btn-primary:hover {
+            box-shadow: 0 4px 18px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-icon-only {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            justify-content: center;
+            border-radius: var(--radius-md);
+        }
+
+        .btn-action svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* User Profile Pill */
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            padding: 4px 12px 4px 4px;
+            border-radius: var(--radius-full);
             font-size: 13px;
-            border-left: 4px solid;
         }
-        
-        .activity-info { background: #e3f2fd; border-color: #2196f3; }
-        .activity-success { background: #e8f5e9; border-color: #4caf50; }
-        .activity-warning { background: #fff8e1; border-color: #ff9800; }
-        .activity-error { background: #fce4ec; border-color: #f44336; }
-        
-        .activity-time {
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #10b981);
+            color: white;
+            font-weight: 700;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main Container */
+        main {
+            position: relative;
+            z-index: 1;
+            max-width: 1540px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px 28px 48px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* KPI Row */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 16px;
+        }
+
+        .kpi-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+        }
+
+        .kpi-card:hover {
+            border-color: var(--border-strong);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .kpi-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .kpi-icon-wrap {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .kpi-subtext {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .kpi-alert-glow {
+            border-color: rgba(245, 158, 11, 0.4);
+            box-shadow: var(--shadow-warning);
+            animation: alertPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes alertPulse {
+            0%, 100% { border-color: rgba(245, 158, 11, 0.4); }
+            50% { border-color: rgba(245, 158, 11, 0.8); }
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 4px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .tab-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition-smooth);
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-surface);
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .tab-badge {
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
             font-size: 11px;
-            color: #888;
-            margin-top: 4px;
+            font-weight: 700;
+            background: var(--danger);
+            color: white;
+            line-height: 1.3;
         }
-        
-        /* Approval Queue */
-        .approval-queue {
-            max-height: 600px;
-            overflow-y: auto;
+
+        .tab-badge.badge-neutral {
+            background: var(--border-strong);
+            color: var(--text-secondary);
         }
-        
-        .approval-item {
-            border: 2px solid #ff9800;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            background: #fff8e1;
-            animation: slideIn 0.3s ease;
+
+        /* Tab Contents */
+        .tab-pane {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            animation: fadeIn 0.25s ease-out forwards;
         }
-        
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
+
+        .tab-pane.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
-        .approval-header {
+
+        /* ========================================================
+           TAB 1: HITL APPROVAL QUEUE
+           ======================================================== */
+        .approval-queue-container {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .queue-header-bar {
+            display: flex;
             align-items: center;
-            margin-bottom: 10px;
+            justify-content: space-between;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 14px 20px;
         }
-        
-        .approval-badge {
-            background: #ff9800;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: bold;
+
+        .queue-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        
-        .email-preview {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 12px;
-            font-family: monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
-            max-height: 150px;
-            overflow-y: auto;
-            margin: 10px 0;
+
+        .queue-title {
+            font-size: 16px;
+            font-weight: 700;
         }
-        
-        .approval-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
-            margin-top: 10px;
+
+        /* Approval Card (The Core HITL Element) */
+        .approval-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-left: 4px solid var(--warning);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: var(--transition-smooth);
         }
-        
-        .edit-section {
-            display: none;
-            margin-top: 10px;
+
+        .approval-card.card-notify {
+            border-left-color: var(--info);
         }
-        
-        .edit-section.visible { display: block; }
-        
-        /* Stats */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+
+        .approval-card.card-respond {
+            border-left-color: var(--primary);
+        }
+
+        .card-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border-subtle);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .workflow-tag-group {
+            display: flex;
+            align-items: center;
             gap: 10px;
-            margin-bottom: 15px;
         }
-        
-        .stat-card {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 28px;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .stat-label {
+
+        .badge-status {
             font-size: 12px;
-            color: #666;
-            margin-top: 4px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
-        
-        /* Empty state */
-        .empty-state {
+
+        .badge-warning { background: var(--warning-light); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-primary { background: var(--primary-light); color: var(--primary); border: 1px solid rgba(99, 102, 241, 0.3); }
+        .badge-info { background: var(--info-light); color: var(--info); border: 1px solid rgba(14, 165, 233, 0.3); }
+        .badge-success { background: var(--success-light); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-danger { background: var(--danger-light); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .time-pill {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        /* Two-Column Comparison Layout */
+        .approval-comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        @media (max-width: 1024px) {
+            .approval-comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .comparison-panel {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .comparison-panel.panel-left {
+            border-right: 1px solid var(--border-subtle);
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .panel-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .email-meta-block {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 14px;
+        }
+
+        .meta-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: var(--text-muted);
+            min-width: 60px;
+            font-size: 12px;
+        }
+
+        .meta-value {
+            color: var(--text-primary);
+            word-break: break-all;
+        }
+
+        .meta-subject {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .email-body-content {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        /* AI Proposed Action Panel (Right Side) */
+        .ai-action-preview-box {
+            background: var(--bg-base);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.1);
+        }
+
+        .triage-rationale-pill {
+            background: rgba(99, 102, 241, 0.12);
+            border-left: 3px solid var(--primary);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .draft-text-preview {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        /* Inline Editor Box */
+        .edit-draft-container {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .edit-draft-container.active {
+            display: flex;
+        }
+
+        .edit-textarea {
+            width: 100%;
+            min-height: 200px;
+            background: var(--bg-elevated);
+            border: 2px solid var(--primary);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            padding: 14px;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+        }
+
+        .edit-textarea:focus {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.35);
+        }
+
+        .editor-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Action Buttons Bar */
+        .card-actions-bar {
+            padding: 16px 24px;
+            background: var(--bg-elevated);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-approve {
+            background: var(--success-gradient);
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 14px rgba(16, 185, 129, 0.3);
+            transition: var(--transition-smooth);
+        }
+
+        .btn-approve:hover {
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .btn-edit-toggle {
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border-strong);
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-edit-toggle:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .btn-deny {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-deny:hover {
+            background: var(--danger-light);
+            border-color: var(--danger);
+        }
+
+        /* Empty Queue State */
+        .empty-queue-hero {
+            background: var(--bg-surface);
+            border: 1px dashed var(--border-strong);
+            border-radius: var(--radius-xl);
+            padding: 64px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             text-align: center;
-            padding: 40px;
-            color: #888;
+            gap: 16px;
         }
-        
-        .empty-state span { font-size: 48px; display: block; margin-bottom: 10px; }
-        
-        /* Processing indicator */
-        .processing {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 2px solid #667eea;
+
+        .hero-radar-art {
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
+            background: var(--primary-light);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
         }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+
+        .hero-radar-art svg {
+            width: 36px;
+            height: 36px;
+            color: var(--primary);
         }
-        
-        /* Full width sections */
-        .full-width { grid-column: 1 / -1; }
-        
-        /* Workflow history */
-        .history-table {
+
+        .empty-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .empty-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            max-width: 460px;
+            line-height: 1.6;
+        }
+
+        /* ========================================================
+           TAB 2: LIVE EXECUTION STREAM (LOGS)
+           ======================================================== */
+        .stream-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stream-toolbar {
+            padding: 14px 20px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .stream-filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .stream-log-body {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            padding: 16px 20px;
+            max-height: 520px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: var(--bg-base);
+        }
+
+        .log-entry {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 3px solid transparent;
+            line-height: 1.5;
+        }
+
+        .log-entry.level-info { border-left-color: var(--info); }
+        .log-entry.level-success { border-left-color: var(--success); }
+        .log-entry.level-warning { border-left-color: var(--warning); }
+        .log-entry.level-error { border-left-color: var(--danger); }
+
+        .log-time {
+            color: var(--text-muted);
+            font-size: 11px;
+            min-width: 70px;
+        }
+
+        .log-tag {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .log-tag.tag-triage { background: rgba(99, 102, 241, 0.2); color: var(--primary); }
+        .log-tag.tag-approval { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .log-tag.tag-poll { background: rgba(14, 165, 233, 0.2); color: var(--info); }
+        .log-tag.tag-exec { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .log-tag.tag-err { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+        .log-msg {
+            color: var(--text-primary);
+            flex: 1;
+            word-break: break-word;
+        }
+
+        /* ========================================================
+           TAB 3: INTERACTION HISTORY TABLE
+           ======================================================== */
+        .history-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .history-toolbar {
+            padding: 16px 20px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .search-input-wrap {
+            position: relative;
+            max-width: 340px;
+            width: 100%;
+        }
+
+        .search-input-wrap svg {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: var(--text-muted);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 12px 8px 36px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .data-table {
             width: 100%;
             border-collapse: collapse;
-        }
-        
-        .history-table th {
-            background: #f8f9fa;
-            padding: 10px;
             text-align: left;
             font-size: 13px;
-            border-bottom: 2px solid #dee2e6;
         }
-        
-        .history-table td {
-            padding: 10px;
+
+        .data-table th {
+            padding: 12px 18px;
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            font-weight: 700;
+            border-bottom: 1px solid var(--border-subtle);
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            vertical-align: middle;
+        }
+
+        .data-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-primary);
+        }
+
+        .sender-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* ========================================================
+           TAB 4: LEARNED MEMORY & RULES
+           ======================================================== */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 20px;
+        }
+
+        .memory-box {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .memory-box-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 10px;
+        }
+
+        .memory-box-title {
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .preference-pill-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .pref-pill {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-full);
+            padding: 6px 14px;
             font-size: 13px;
-            border-bottom: 1px solid #dee2e6;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
-        
-        .badge {
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: bold;
+
+        .pref-pill-label {
+            color: var(--text-muted);
+            font-weight: 600;
         }
-        
-        .badge-ignore { background: #e9ecef; color: #495057; }
-        .badge-notify { background: #fff3cd; color: #856404; }
-        .badge-respond { background: #d1ecf1; color: #0c5460; }
-        .badge-approved { background: #d4edda; color: #155724; }
-        .badge-denied { background: #f8d7da; color: #721c24; }
-        .badge-edited { background: #cce5ff; color: #004085; }
+
+        .pref-pill-value {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .chip-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .chip-danger {
+            background: var(--danger-light);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-family: var(--font-mono);
+        }
+
+        .chip-success {
+            background: var(--success-light);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-family: var(--font-mono);
+        }
+
+        /* ========================================================
+           TAB 5: SYSTEM ARCHITECTURE
+           ======================================================== */
+        .system-arch-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .system-arch-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .graph-flow-box {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .flow-node-step {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            position: relative;
+        }
+
+        .node-step-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background: var(--bg-elevated);
+        }
+
+        .node-step-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .node-step-title {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .node-step-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .node-connector {
+            width: 2px;
+            height: 18px;
+            background: var(--border-strong);
+            margin: -4px 0 -4px 36px;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-md);
+            padding: 12px 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: toastIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            pointer-events: auto;
+            max-width: 380px;
+        }
+
+        @keyframes toastIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* App Footer */
+        footer {
+            margin-top: auto;
+            border-top: 1px solid var(--border-subtle);
+            padding: 16px 28px;
+            background: var(--bg-surface);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .footer-links {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .footer-links a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
     </style>
 </head>
-<body>
+<body data-theme="dark">
 
-<div class="header">
-    <h1>📧 Email Agent - HITL Dashboard</h1>
-    <div>
-        <span id="connection-status" class="status-badge status-disconnected">
-            ⚡ Disconnected
-        </span>
-    </div>
-</div>
+    <div class="ambient-glow"></div>
 
-<div class="container">
-    
-    <!-- LEFT COLUMN: Test Email Form -->
-    <div>
-        <div class="card">
-            <h2>📤 Test Email Processing</h2>
-            
-            <div class="form-group">
-                <label>From (Sender Email)</label>
-                <input type="email" id="email-from" placeholder="colleague@company.com" 
-                       value="colleague@company.com">
+    <!-- Top Application Bar -->
+    <header>
+        <a href="#" class="header-brand">
+            <div class="brand-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
             </div>
-            
-            <div class="form-group">
-                <label>Subject</label>
-                <input type="text" id="email-subject" placeholder="Email subject" 
-                       value="Meeting next week?">
+            <div class="brand-titles">
+                <div class="brand-name">
+                    MailMind
+                    <span class="badge-pill">LangGraph Ambient</span>
+                </div>
+                <div class="brand-subtitle">Autonomous Gmail & Calendar Agent</div>
             </div>
-            
-            <div class="form-group">
-                <label>Body</label>
-                <textarea id="email-body" placeholder="Email content...">Can we schedule a quick 30-minute sync next week to discuss the Q4 project? I'm generally free in the afternoons.</textarea>
-            </div>
-            
-            <button class="btn btn-primary" onclick="processEmail()" id="process-btn">
-                🚀 Process Email
+        </a>
+
+        <!-- Ambient Monitoring Status Indicator -->
+        <div class="ambient-status-bar" id="ambient-status-container">
+            <div class="radar-pulse" id="radar-indicator"></div>
+            <span id="ambient-status-text">Monitoring Gmail Inbox (20s cycle)</span>
+        </div>
+
+        <!-- Header Controls -->
+        <div class="header-actions">
+            <!-- Manual Scan Inbox Button -->
+            <button class="btn-action btn-primary" onclick="triggerManualPoll()" id="btn-scan-inbox" title="Scan unread Gmail messages immediately">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" id="scan-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                <span id="scan-btn-label">Scan Inbox Now</span>
             </button>
-        </div>
-        
-        <!-- Stats Card -->
-        <div class="card" style="margin-top: 20px;">
-            <h2>📊 Session Statistics</h2>
-            
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-total">0</div>
-                    <div class="stat-label">Processed</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-approved">0</div>
-                    <div class="stat-label">Approved</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-denied">0</div>
-                    <div class="stat-label">Denied</div>
-                </div>
-            </div>
-            
-            <div id="health-status" style="font-size: 12px; color: #666; padding: 10px; background: #f8f9fa; border-radius: 8px;"></div>
-        </div>
-        
-        <!-- Activity Feed -->
-        <div class="card" style="margin-top: 20px;">
-            <h2>📋 Activity Feed</h2>
-            <div class="activity-feed" id="activity-feed">
-                <div class="empty-state">
-                    <span>📭</span>
-                    No activity yet
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- RIGHT COLUMN: Approval Queue -->
-    <div>
-        <div class="card">
-            <h2>
-                🛑 Approval Queue 
-                <span id="pending-count" style="background: #dc3545; color: white; 
-                      padding: 2px 8px; border-radius: 12px; font-size: 14px; margin-left: 8px;">0</span>
-            </h2>
-            
-            <div class="approval-queue" id="approval-queue">
-                <div class="empty-state" id="empty-approvals">
-                    <span>✅</span>
-                    No pending approvals
-                </div>
-            </div>
-        </div>
-        
-        <!-- Workflow History -->
-        <div class="card" style="margin-top: 20px;">
-            <h2>📜 Workflow History</h2>
-            <div style="overflow-x: auto;">
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Subject</th>
-                            <th>Triage</th>
-                            <th>Decision</th>
-                            <th>Time</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history-tbody">
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: #888;">
-                                No history yet
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    
-</div>
 
-<script>
-    // ===== STATE =====
-    let ws = null;
-    let stats = { total: 0, approved: 0, denied: 0, edited: 0 };
-    let pendingCount = 0;
-    let history = [];
-    
-    // ===== WEBSOCKET =====
-    function connectWebSocket() {
-        ws = new WebSocket(`ws://${window.location.host}/ws`);
-        
-        ws.onopen = () => {
-            document.getElementById('connection-status').textContent = '⚡ Connected';
-            document.getElementById('connection-status').className = 'status-badge status-connected';
-            addActivity('Connected to server', 'info');
-            fetchHealth();
-        };
-        
-        ws.onclose = () => {
-            document.getElementById('connection-status').textContent = '⚡ Disconnected';
-            document.getElementById('connection-status').className = 'status-badge status-disconnected';
-            addActivity('Disconnected from server', 'error');
-            setTimeout(connectWebSocket, 3000);
-        };
-        
-        ws.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            handleMessage(message);
-        };
-        
-        ws.onerror = () => {
-            addActivity('WebSocket error', 'error');
-        };
-    }
-    
-    function handleMessage(message) {
-        console.log('Message:', message);
-        
-        switch(message.type) {
-            case 'processing_started':
-                handleProcessingStarted(message);
-                break;
-            case 'triage_complete':
-                handleTriageComplete(message);
-                break;
-            case 'approval_request':
-                // Treat same as approval_required
-                handleApprovalRequired(message);
-                break;
-            case 'approval_required':
-                handleApprovalRequired(message);
-                break;
-            case 'decision_recorded':
-                handleDecisionRecorded(message);
-                break;
-            case 'workflow_complete':
-                handleWorkflowComplete(message);
-                break;
-            case 'workflow_error':
-                handleWorkflowError(message);
-                break;
-            case 'workflow_timeout':
-                addActivity(`Workflow ${message.workflow_id} timed out`, 'warning');
-                break;
-        }
-    }
-    
-    // ===== MESSAGE HANDLERS =====
-    function handleProcessingStarted(message) {
-        stats.total++;
-        updateStats();
-        
-        addActivity(
-            `<span class="processing"></span>Processing: "${message.email.subject}" from ${message.email.from}`,
-            'info'
-        );
-    }
-    
-    function handleTriageComplete(message) {
-        const decisionColors = {
-            'ignore': 'badge-ignore',
-            'notify_human': 'badge-notify',
-            'respond': 'badge-respond'
-        };
-        
-        addActivity(
-            `Triage: <span class="badge ${decisionColors[message.decision] || ''}">${message.decision}</span> - ${message.reasoning}`,
-            'info'
-        );
-    }
-    
-    function handleApprovalRequired(message) {
-        const data = message.data;
-        pendingCount++;
-        updatePendingCount();
-        
-        // Add activity with appropriate icon
-        if (data.notification_type) {
-            addActivity(
-                `🔔 Notify: "${data.subject}" requires attention (click Respond to type your reply)`,
-                'warning'
-            );
-        } else {
-            addActivity(
-                `⚠️ Approval required for: "${data.subject}"`,
-                'warning'
-            );
-        }
-        
-        // Remove empty state
-        document.getElementById('empty-approvals').style.display = 'none';
-        
-        // Create approval card
-        const card = createApprovalCard(data);
-        document.getElementById('approval-queue').appendChild(card);
-    }
-    
-    function handleDecisionRecorded(message) {
-        // Remove approval card
-        const card = document.getElementById(`approval-${message.workflow_id}`);
-        if (card) {
-            card.style.animation = 'slideIn 0.3s ease reverse';
-            setTimeout(() => card.remove(), 300);
-        }
-        
-        pendingCount = Math.max(0, pendingCount - 1);
-        updatePendingCount();
-        
-        if (pendingCount === 0) {
-            document.getElementById('empty-approvals').style.display = 'block';
-        }
-    }
-    
-    function handleWorkflowComplete(message) {
-        const decision = message.decision;
-        
-        if (decision === 'approve' || decision === 'edit') {
-            stats.approved++;
-        } else if (decision === 'deny' || decision === 'ignored') {
-            stats.denied++;
-        }
-        
-        updateStats();
-        
-        const statusText = message.execution_status === 'success' 
-            ? '✅ Completed successfully' 
-            : `✓ Completed (${message.decision || 'auto'})`;
-        
-        addActivity(statusText, 'success');
-    }
-    
-    function handleWorkflowError(message) {
-        addActivity(`❌ Error: ${message.error}`, 'error');
-    }
-    
-    // ===== UI FUNCTIONS =====
-    function createApprovalCard(data) {
-    const card = document.createElement('div');
-    card.className = 'approval-item';
-    card.id = `approval-${data.workflow_id}`;
-    
-    const time = new Date(data.timestamp).toLocaleTimeString();
-    const isNotification = data.notification_type === true;
-    
-    if (isNotification) {
-        card.innerHTML = `
-            <div class="approval-header">
-                <div>
-                    <span class="approval-badge">🔔 Notification</span>
-                    <span style="font-size: 12px; color: #666; margin-left: 8px;">${time}</span>
+            <!-- Theme Toggle -->
+            <button class="btn-action btn-icon-only" onclick="toggleTheme()" id="btn-theme-toggle" title="Toggle Dark/Light Mode">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" id="theme-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                </svg>
+            </button>
+
+            <!-- User Pill -->
+            <div class="user-badge" id="user-badge-container">
+                <div class="user-avatar" id="user-avatar-text">AI</div>
+                <span id="user-email-text" style="font-weight: 600; font-size: 13px;">Connecting...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main>
+
+        <!-- Executive KPI Overview Bar -->
+        <section class="kpi-grid">
+            <!-- Total Ambient Processed -->
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span>Emails Processed</span>
+                    <div class="kpi-icon-wrap" style="background: var(--info-light); color: var(--info);">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                        </svg>
+                    </div>
                 </div>
-                <span style="font-size: 12px; color: #888;">#${data.workflow_id}</span>
-            </div>
-            
-            <div style="font-size: 13px; margin: 8px 0;">
-                <strong>From:</strong> ${data.recipient}<br>
-                <strong>Subject:</strong> ${data.subject}
-            </div>
-            
-            <div class="email-preview">${data.draft_preview}</div>
-            
-            <div id="notification-buttons-${data.workflow_id}" class="approval-buttons" style="grid-template-columns: 1fr 1fr;">
-                <button class="btn btn-success" onclick="showResponseInput('${data.workflow_id}')">
-                    ✍️ Respond
-                </button>
-                <button class="btn btn-secondary" onclick="submitDecision('${data.workflow_id}', 'ignore')">
-                    📦 Ignore
-                </button>
-            </div>
-            
-            <div id="response-input-${data.workflow_id}" style="display: none; margin-top: 15px;">
-                <label style="font-weight: bold;">Type your response:</label>
-                <textarea id="response-text-${data.workflow_id}" rows="5" style="width: 100%; padding: 8px; margin: 8px 0;"></textarea>
-                <button class="btn btn-primary" onclick="submitCustomResponse('${data.workflow_id}')">
-                    📤 Submit Response for Approval
-                </button>
-                <button class="btn btn-secondary" onclick="cancelResponse('${data.workflow_id}')">
-                    Cancel
-                </button>
-            </div>
-        `;
-} else {
-        // Regular approval card (with Approve/Deny/Edit)
-        card.innerHTML = `
-            <div class="approval-header">
-                <div>
-                    <span class="approval-badge">⚠️ ${data.action_type}</span>
-                    <span style="font-size: 12px; color: #666; margin-left: 8px;">${time}</span>
+                <div class="kpi-value" id="kpi-total-processed">0</div>
+                <div class="kpi-subtext">
+                    <span>Ambiently received & triaged</span>
                 </div>
-                <span style="font-size: 12px; color: #888;">#${data.workflow_id}</span>
             </div>
-            
-            <div style="font-size: 13px; margin: 8px 0;">
-                <strong>To:</strong> ${data.recipient}<br>
-                <strong>Subject:</strong> ${data.subject}
+
+            <!-- Pending HITL Approvals -->
+            <div class="kpi-card" id="kpi-card-pending">
+                <div class="kpi-header">
+                    <span>Pending Approvals</span>
+                    <div class="kpi-icon-wrap" style="background: var(--warning-light); color: var(--warning);">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpi-pending-count" style="color: var(--warning);">0</div>
+                <div class="kpi-subtext">
+                    <span id="kpi-pending-subtext">No action required right now</span>
+                </div>
             </div>
-            
-            <div class="email-preview">${data.draft_preview}</div>
-            
-            <div class="approval-buttons">
-                <button class="btn btn-success" onclick="submitDecision('${data.workflow_id}', 'approve')">
-                    ✓ Approve
-                </button>
-                <button class="btn btn-danger" onclick="submitDecision('${data.workflow_id}', 'deny')">
-                    ✗ Deny
-                </button>
-                <button class="btn btn-warning" onclick="toggleEdit('${data.workflow_id}')">
-                    ✏️ Edit
-                </button>
+
+            <!-- Approved Actions -->
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span>Human Approved</span>
+                    <div class="kpi-icon-wrap" style="background: var(--success-light); color: var(--success);">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpi-approved-count" style="color: var(--success);">0</div>
+                <div class="kpi-subtext">
+                    <span id="kpi-approved-rate">0% approval rate</span>
+                </div>
             </div>
-            
-            <div class="edit-section" id="edit-${data.workflow_id}">
-                <label style="margin-top: 10px;">Edit email content:</label>
-                <textarea id="edit-content-${data.workflow_id}" rows="4">${data.body || ''}</textarea>
-                <button class="btn btn-primary" onclick="submitDecision('${data.workflow_id}', 'edit')" style="margin-top: 8px;">
-                    ✓ Submit Edit
-                </button>
+
+            <!-- Denied / Rejections -->
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span>Rejections / Denies</span>
+                    <div class="kpi-icon-wrap" style="background: var(--danger-light); color: var(--danger);">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpi-denied-count" style="color: var(--danger);">0</div>
+                <div class="kpi-subtext">
+                    <span>Trained into agent memory</span>
+                </div>
             </div>
-        `;
-    }
-    
-    return card;
-}
-    
-    // Functions for notification response
-    function showResponseInput(workflowId) {
-        document.getElementById(`notification-buttons-${workflowId}`).style.display = 'none';
-        document.getElementById(`response-input-${workflowId}`).style.display = 'block';
-    }
-    
-    function cancelResponse(workflowId) {
-        document.getElementById(`response-input-${workflowId}`).style.display = 'none';
-        document.getElementById(`notification-buttons-${workflowId}`).style.display = 'flex';
-    }
-    
-    function submitCustomResponse(workflowId) {
-        const typedResponse = document.getElementById(`response-text-${workflowId}`).value.trim();
-        if (!typedResponse) {
-            alert('Please type a response.');
-            return;
-        }
-        
-        // Send the typed response as an "respond" decision with edited_content
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
-                type: 'human_decision',
-                workflow_id: workflowId,
-                decision: 'respond',      // will be interpreted as custom response because edited_content is provided
-                edited_content: typedResponse
-            }));
+
+            <!-- Learned Preferences -->
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span>Learned Preferences</span>
+                    <div class="kpi-icon-wrap" style="background: var(--primary-light); color: var(--primary);">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="kpi-value" id="kpi-memory-rules">5</div>
+                <div class="kpi-subtext">
+                    <span id="kpi-contacts-count">1 contact context tracked</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('approvals')" id="tab-nav-approvals">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                Approval Queue
+                <span class="tab-badge" id="tab-approval-badge" style="display: none;">0</span>
+            </button>
+
+            <button class="tab-btn" onclick="switchTab('stream')" id="tab-nav-stream">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                Execution Stream
+            </button>
+
+            <button class="tab-btn" onclick="switchTab('history')" id="tab-nav-history">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Email History
+            </button>
+
+            <button class="tab-btn" onclick="switchTab('memory')" id="tab-nav-memory">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+                Agent Memory & Rules
+            </button>
+
+            <button class="tab-btn" onclick="switchTab('architecture')" id="tab-nav-architecture">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                </svg>
+                LangGraph Architecture
+            </button>
+        </nav>
+
+        <!-- ========================================================
+             TAB 1: APPROVAL QUEUE PANE
+             ======================================================== -->
+        <div class="tab-pane active" id="pane-approvals">
             
-            addActivity(`Custom response submitted for workflow #${workflowId}`, 'info');
+            <div class="queue-header-bar">
+                <div class="queue-title-group">
+                    <h2 class="queue-title">Human-In-The-Loop Verification Queue</h2>
+                    <span class="badge-status badge-warning" id="queue-status-badge">0 Pending Decisions</span>
+                </div>
+                <div style="font-size: 13px; color: var(--text-muted);">
+                    LangGraph pauses execution safely until approved, edited, or denied
+                </div>
+            </div>
+
+            <!-- Approval Items Container -->
+            <div class="approval-queue-container" id="approval-items-wrapper">
+                
+                <!-- Empty State (Default when 0 pending) -->
+                <div class="empty-queue-hero" id="empty-queue-view">
+                    <div class="hero-radar-art">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="empty-title">All Caught Up — No Pending Approvals</h3>
+                    <p class="empty-subtitle">
+                        The LangGraph Ambient Agent is actively polling your Gmail inbox in the background. When an incoming email warrants an AI draft or meeting creation, it will instantly appear here for your review.
+                    </p>
+                    <button class="btn-action btn-primary" onclick="triggerManualPoll()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Scan Gmail Inbox Now
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ========================================================
+             TAB 2: EXECUTION STREAM PANE
+             ======================================================== -->
+        <div class="tab-pane" id="pane-stream">
+            <div class="stream-card">
+                <div class="stream-toolbar">
+                    <div class="stream-filter-group">
+                        <span style="font-weight: 700; font-size: 13px; margin-right: 6px;">Filter Log:</span>
+                        <button class="filter-btn active" onclick="filterLogs('all', this)">All Events</button>
+                        <button class="filter-btn" onclick="filterLogs('triage', this)">Triage</button>
+                        <button class="filter-btn" onclick="filterLogs('approval', this)">Approvals</button>
+                        <button class="filter-btn" onclick="filterLogs('exec', this)">Executions</button>
+                        <button class="filter-btn" onclick="filterLogs('poll', this)">Polls</button>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-action" onclick="clearStreamLog()" style="padding: 4px 10px; font-size: 12px;">
+                            Clear Stream
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stream-log-body" id="stream-log-container">
+                    <!-- Dynamic log items will be appended here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================
+             TAB 3: EMAIL HISTORY PANE
+             ======================================================== -->
+        <div class="tab-pane" id="pane-history">
+            <div class="history-card">
+                <div class="history-toolbar">
+                    <div class="search-input-wrap">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" class="search-input" id="history-search-input" placeholder="Search sender, subject..." oninput="filterHistoryTable()">
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 12px; color: var(--text-muted);" id="history-count-label">Loaded 0 records</span>
+                        <button class="btn-action" onclick="loadHistoryData()" style="padding: 6px 12px; font-size: 12px;">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Email ID</th>
+                                <th>Sender</th>
+                                <th>Subject</th>
+                                <th>Triage Decision</th>
+                                <th>Action Executed</th>
+                                <th>Human Result</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                                    Loading history from database...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================
+             TAB 4: AGENT MEMORY & RULES PANE
+             ======================================================== -->
+        <div class="tab-pane" id="pane-memory">
+            <div class="memory-grid">
+                
+                <!-- Learned Writing Style -->
+                <div class="memory-box">
+                    <div class="memory-box-header">
+                        <div class="memory-box-title">
+                            <span>✍️</span> Learned Tone & Style Rules
+                        </div>
+                        <span class="badge-status badge-primary">Auto-Learned</span>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary);">
+                        These parameters are automatically extracted from your edits and used by the ReAct node when drafting responses:
+                    </p>
+                    <div class="preference-pill-list" id="pref-pills-container">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Avoid / Prefer Vocabularies -->
+                <div class="memory-box">
+                    <div class="memory-box-header">
+                        <div class="memory-box-title">
+                            <span>🚫</span> Vocabulary Constraints
+                        </div>
+                        <span class="badge-status badge-info">Extracted Diffs</span>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; font-weight: 700; color: var(--danger); margin-bottom: 6px;">
+                            AVOID WORDS & PHRASES (Removed by human in past edits):
+                        </div>
+                        <div class="chip-list" id="avoid-words-container">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <div style="font-size: 12px; font-weight: 700; color: var(--success); margin-bottom: 6px;">
+                            PREFER WORDS & PHRASES (Added by human):
+                        </div>
+                        <div class="chip-list" id="prefer-words-container">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sender Directory -->
+                <div class="memory-box" style="grid-column: 1 / -1;">
+                    <div class="memory-box-header">
+                        <div class="memory-box-title">
+                            <span>👥</span> Sender Relationship Intelligence
+                        </div>
+                        <span class="badge-status badge-success" id="senders-total-badge">1 Sender Profile</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Sender</th>
+                                    <th>Name</th>
+                                    <th>Relationship</th>
+                                    <th>Tone</th>
+                                    <th>Triage Override</th>
+                                    <th>Interactions</th>
+                                    <th>Notes</th>
+                                    <th>Last Seen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="senders-table-body">
+                                <tr>
+                                    <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                                        Loading sender context...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ========================================================
+             TAB 5: LANGGRAPH ARCHITECTURE PANE
+             ======================================================== -->
+        <div class="tab-pane" id="pane-architecture">
+            <div class="system-arch-grid">
+                
+                <!-- LangGraph Visual Pipeline -->
+                <div class="graph-flow-box">
+                    <h3 style="font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                        <span>🧬</span> LangGraph StateGraph Architecture
+                    </h3>
+                    <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                        This Ambient Agent uses a stateful cyclical LangGraph workflow. When an email is detected, state flows sequentially through each node with a memory-informed checkpoint before external side-effects:
+                    </p>
+
+                    <div style="display: flex; flex-direction: column;">
+                        <!-- Node 1 -->
+                        <div class="flow-node-step">
+                            <div class="node-step-icon">🧠</div>
+                            <div class="node-step-info">
+                                <div class="node-step-title">1. load_memory_node</div>
+                                <div class="node-step-desc">Queries SQLite database for sender relationship, past corrections, and user preferences.</div>
+                            </div>
+                        </div>
+                        <div class="node-connector"></div>
+
+                        <!-- Node 2 -->
+                        <div class="flow-node-step">
+                            <div class="node-step-icon">🚦</div>
+                            <div class="node-step-info">
+                                <div class="node-step-title">2. triage_node</div>
+                                <div class="node-step-desc">Categorizes email into [ignore, notify_human, respond] based on context and urgency.</div>
+                            </div>
+                        </div>
+                        <div class="node-connector"></div>
+
+                        <!-- Node 3 -->
+                        <div class="flow-node-step">
+                            <div class="node-step-icon">🤖</div>
+                            <div class="node-step-info">
+                                <div class="node-step-title">3. react_agent_node</div>
+                                <div class="node-step-desc">Invokes tools (search calendar, check availability) and drafts the response payload.</div>
+                            </div>
+                        </div>
+                        <div class="node-connector"></div>
+
+                        <!-- Node 4 -->
+                        <div class="flow-node-step" style="border-color: var(--warning); background: var(--warning-light);">
+                            <div class="node-step-icon" style="background: var(--warning); color: black;">🛡️</div>
+                            <div class="node-step-info">
+                                <div class="node-step-title" style="color: var(--warning);">4. hitl_checkpoint (Human In The Loop)</div>
+                                <div class="node-step-desc">Pauses graph execution. Emits WebSocket approval event to this UI dashboard.</div>
+                            </div>
+                        </div>
+                        <div class="node-connector"></div>
+
+                        <!-- Node 5 -->
+                        <div class="flow-node-step">
+                            <div class="node-step-icon">🚀</div>
+                            <div class="node-step-info">
+                                <div class="node-step-title">5. execute_action_node</div>
+                                <div class="node-step-desc">On approval, dispatches Gmail API email reply or Google Calendar event creation.</div>
+                            </div>
+                        </div>
+                        <div class="node-connector"></div>
+
+                        <!-- Node 6 -->
+                        <div class="flow-node-step">
+                            <div class="node-step-icon">💾</div>
+                            <div class="node-step-info">
+                                <div class="node-step-title">6. update_memory_node</div>
+                                <div class="node-step-desc">Extracts diff patterns from human feedback to reinforce preferences and update weights.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service Status Sidebar -->
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="memory-box">
+                        <div class="memory-box-header">
+                            <div class="memory-box-title">
+                                <span>🔌</span> Live Integrations
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Gmail API Poller</span>
+                                <span class="badge-status badge-success" id="badge-poller-status">Active (20s)</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Google Calendar Service</span>
+                                <span class="badge-status badge-success" id="badge-calendar-status">Connected</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>LangGraph Checkpointer</span>
+                                <span class="badge-status badge-primary">MemorySaver</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>SQLite Agent Memory</span>
+                                <span class="badge-status badge-info">agent_memory.db</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>WebSocket Server</span>
+                                <span class="badge-status badge-success" id="badge-ws-status">Connected</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="memory-box">
+                        <div class="memory-box-header">
+                            <div class="memory-box-title">
+                                <span>⌨️</span> Keyboard Shortcuts
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: var(--text-secondary);">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Scan Inbox</span>
+                                <kbd style="background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);">Alt + S</kbd>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Approve Top Item</span>
+                                <kbd style="background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);">Alt + A</kbd>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Deny Top Item</span>
+                                <kbd style="background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);">Alt + D</kbd>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Toggle Theme</span>
+                                <kbd style="background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);">Alt + T</kbd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-wrapper"></div>
+
+    <!-- Application Footer -->
+    <footer>
+        <div>
+            <strong>MailMind Ambient Email Intelligence</strong> — Built with LangGraph, Gmail API & Google Calendar
+        </div>
+        <div class="footer-links">
+            <span>Server: <code style="font-family: var(--font-mono); color: var(--primary);">127.0.0.1:8000</code></span>
+            <span>Uptime: <span id="session-uptime" style="font-family: var(--font-mono);">00:00:00</span></span>
+        </div>
+    </footer>
+
+    <!-- Application Logic (Vanilla JS) -->
+    <script>
+        // ==========================================
+        // STATE STORE
+        // ==========================================
+        const state = {
+            ws: null,
+            isConnected: false,
+            pendingApprovals: new Map(),
+            historyRecords: [],
+            stats: {
+                total_emails: 0,
+                approve_count: 0,
+                deny_count: 0,
+                pending_count: 0,
+                preferences_count: 0,
+                senders_count: 0
+            },
+            activeTab: 'approvals',
+            sessionStart: Date.now()
+        };
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            connectWebSocket();
+            fetchInitialData();
+            startUptimeClock();
+            setupKeyboardShortcuts();
+            // Periodic sync every 8s to ensure queue never drifts from backend state
+            setInterval(fetchHealthAndStats, 8000);
+        });
+
+        // ==========================================
+        // WEBSOCKET LOGIC
+        // ==========================================
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
             
-            // Remove this notification card immediately (the backend will create a new approval card for the draft)
-            const card = document.getElementById(`approval-${workflowId}`);
-            if (card) card.remove();
-            
-            pendingCount = Math.max(0, pendingCount - 1);
-            updatePendingCount();
-            if (pendingCount === 0) {
-                document.getElementById('empty-approvals').style.display = 'block';
+            appendLog('Connecting to Ambient Agent WebSocket...', 'info', 'ws');
+
+            try {
+                state.ws = new WebSocket(wsUrl);
+
+                state.ws.onopen = () => {
+                    state.isConnected = true;
+                    updateConnectionStatus(true);
+                    appendLog('Connected to LangGraph Ambient Agent', 'success', 'ws');
+                    fetchHealthAndStats();
+                };
+
+                state.ws.onclose = () => {
+                    state.isConnected = false;
+                    updateConnectionStatus(false);
+                    appendLog('WebSocket disconnected. Retrying in 3s...', 'warning', 'ws');
+                    setTimeout(connectWebSocket, 3000);
+                };
+
+                state.ws.onerror = (err) => {
+                    console.error('WebSocket error:', err);
+                };
+
+                state.ws.onmessage = (event) => {
+                    try {
+                        const message = JSON.parse(event.data);
+                        handleWebSocketMessage(message);
+                    } catch (e) {
+                        console.error('Failed to parse WS message:', e);
+                    }
+                };
+            } catch (err) {
+                console.error('WebSocket connection failed:', err);
+                setTimeout(connectWebSocket, 3000);
             }
-        } else {
-            addActivity('WebSocket not connected!', 'error');
         }
-    }
-    
-    function toggleEdit(workflowId) {
-        const editSection = document.getElementById(`edit-${workflowId}`);
-        editSection.classList.toggle('visible');
-    }
-    
-    function submitDecision(workflowId, decision) {
-        let editedContent = '';
-        
-        if (decision === 'edit') {
-            editedContent = document.getElementById(`edit-content-${workflowId}`).value;
+
+        function updateConnectionStatus(connected) {
+            const radar = document.getElementById('radar-indicator');
+            const statusText = document.getElementById('ambient-status-text');
+            const wsBadge = document.getElementById('badge-ws-status');
+
+            if (connected) {
+                radar.className = 'radar-pulse';
+                statusText.textContent = 'Monitoring Gmail Inbox (20s cycle)';
+                if (wsBadge) {
+                    wsBadge.textContent = 'Connected';
+                    wsBadge.className = 'badge-status badge-success';
+                }
+            } else {
+                radar.className = 'radar-pulse radar-paused';
+                statusText.textContent = 'Connecting to Agent Server...';
+                if (wsBadge) {
+                    wsBadge.textContent = 'Disconnected';
+                    wsBadge.className = 'badge-status badge-danger';
+                }
+            }
         }
-        
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
+
+        // Handle Messages from Agent
+        function handleWebSocketMessage(msg) {
+            console.log('AGENT MESSAGE:', msg);
+
+            switch (msg.type) {
+                case 'processing_started':
+                    appendLog(`Ambient scan caught: "${msg.email.subject}" from ${msg.email.from}`, 'info', 'triage');
+                    showToast(`📧 New Email: ${msg.email.subject}`);
+                    state.stats.total_emails++;
+                    updateKpis();
+                    break;
+
+                case 'triage_complete':
+                    appendLog(`Triage [${msg.decision}]: ${msg.reasoning}`, 'info', 'triage');
+                    break;
+
+                case 'approval_request':
+                case 'approval_required':
+                    handleApprovalRequired(msg.data);
+                    break;
+
+                case 'decision_recorded':
+                    appendLog(`Human Decision Recorded for ${msg.workflow_id}: ${msg.decision}`, 'success', 'approval');
+                    removeApprovalCard(msg.workflow_id);
+                    fetchHealthAndStats();
+                    break;
+
+                case 'workflow_complete':
+                    appendLog(`Workflow complete (${msg.workflow_id}) — Status: ${msg.execution_status || 'done'}`, 'success', 'exec');
+                    removeApprovalCard(msg.workflow_id);
+                    fetchHealthAndStats();
+                    loadHistoryData();
+                    break;
+
+                case 'workflow_error':
+                    appendLog(`Agent Error (${msg.workflow_id}): ${msg.error}`, 'error', 'err');
+                    showToast(`⚠️ Workflow error: ${msg.error}`, 'error');
+                    break;
+
+                case 'workflow_timeout':
+                    appendLog(`Approval timed out (${msg.workflow_id})`, 'warning', 'approval');
+                    removeApprovalCard(msg.workflow_id);
+                    break;
+            }
+        }
+
+        // ==========================================
+        // APPROVAL QUEUE HANDLING
+        // ==========================================
+        function handleApprovalRequired(data) {
+            state.pendingApprovals.set(data.workflow_id, data);
+            renderApprovalCards();
+            updatePendingBadge();
+            showToast(`🛑 Action requires approval: ${data.subject || 'New Item'}`, 'warning');
+            appendLog(`HITL Paused [${data.workflow_id}]: Approval required for ${data.action_type || 'action'}`, 'warning', 'approval');
+        }
+
+        function removeApprovalCard(workflowId) {
+            if (state.pendingApprovals.has(workflowId)) {
+                state.pendingApprovals.delete(workflowId);
+                renderApprovalCards();
+                updatePendingBadge();
+            }
+        }
+
+        function renderApprovalCards() {
+            const wrapper = document.getElementById('approval-items-wrapper');
+            const emptyView = document.getElementById('empty-queue-view');
+            const queueBadge = document.getElementById('queue-status-badge');
+
+            const count = state.pendingApprovals.size;
+            queueBadge.textContent = `${count} Pending Decision${count === 1 ? '' : 's'}`;
+            queueBadge.className = `badge-status ${count > 0 ? 'badge-warning' : 'badge-success'}`;
+
+            if (count === 0) {
+                wrapper.innerHTML = '';
+                wrapper.appendChild(emptyView);
+                emptyView.style.display = 'flex';
+                return;
+            }
+
+            emptyView.style.display = 'none';
+            wrapper.innerHTML = '';
+
+            state.pendingApprovals.forEach((item, workflowId) => {
+                const card = createApprovalCardElement(item);
+                wrapper.appendChild(card);
+            });
+        }
+
+        function createApprovalCardElement(item) {
+            const card = document.createElement('div');
+            const isNotification = item.notification_type || item.action_type === 'notify_human';
+            
+            card.className = `approval-card ${isNotification ? 'card-notify' : 'card-respond'}`;
+            card.id = `card-${item.workflow_id}`;
+
+            const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
+
+            // Draft content
+            const draftContent = item.body || item.draft_preview || '';
+
+            card.innerHTML = `
+                <div class="card-top-bar">
+                    <div class="workflow-tag-group">
+                        <span class="badge-status ${isNotification ? 'badge-info' : 'badge-primary'}">
+                            ${isNotification ? '🔔 Notification' : '📝 Action Draft'}
+                        </span>
+                        <span style="font-weight: 700; font-size: 14px;">Workflow #${item.workflow_id}</span>
+                        <span class="time-pill">${timeStr}</span>
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-muted);">
+                        Type: <code style="font-family: var(--font-mono); color: var(--primary);">${item.action_type || 'email_review'}</code>
+                    </div>
+                </div>
+
+                <div class="approval-comparison-grid">
+                    <!-- Left: Incoming Context -->
+                    <div class="comparison-panel panel-left">
+                        <div class="panel-heading">
+                            <span>Incoming Email Context</span>
+                            <span class="badge-status badge-info">Verified</span>
+                        </div>
+
+                        <div class="email-meta-block">
+                            <div class="meta-row">
+                                <span class="meta-label">From:</span>
+                                <span class="meta-value"><strong>${escapeHtml(item.recipient || item.from || 'Sender')}</strong></span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-label">Subject:</span>
+                                <span class="meta-subject">${escapeHtml(item.subject || 'No Subject')}</span>
+                            </div>
+                        </div>
+
+                        <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Original Message:</div>
+                        <div class="email-body-content">${escapeHtml(item.body || item.draft_preview || 'No content provided')}</div>
+                    </div>
+
+                    <!-- Right: AI Decision & Proposed Output -->
+                    <div class="comparison-panel">
+                        <div class="panel-heading">
+                            <span>AI Agent Decision & Action</span>
+                            <span class="badge-status badge-primary">LangGraph ReAct</span>
+                        </div>
+
+                        <div class="ai-action-preview-box">
+                            <div class="triage-rationale-pill">
+                                <strong>Triage Rationale:</strong> The agent analyzed this email and determined human review is necessary before executing the requested action.
+                            </div>
+
+                            <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Proposed Response / Output:</div>
+                            
+                            <!-- Static Preview -->
+                            <div class="draft-text-preview" id="preview-text-${item.workflow_id}">${escapeHtml(draftContent)}</div>
+
+                            <!-- Inline Editor (Hidden by default) -->
+                            <div class="edit-draft-container" id="edit-box-${item.workflow_id}">
+                                <textarea class="edit-textarea" id="textarea-${item.workflow_id}" placeholder="Edit your response...">${draftContent}</textarea>
+                                <div class="editor-footer">
+                                    <span>Tip: Tone preferences will be updated based on your diff.</span>
+                                    <span id="char-count-${item.workflow_id}">${draftContent.length} chars</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Action Buttons -->
+                <div class="card-actions-bar">
+                    ${isNotification ? `
+                        <button class="btn-deny" onclick="submitDecision('${item.workflow_id}', 'ignore')">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            Ignore & Archive
+                        </button>
+                        <button class="btn-approve" onclick="submitDecision('${item.workflow_id}', 'respond')">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                            Draft a Response
+                        </button>
+                    ` : `
+                        <button class="btn-deny" onclick="submitDecision('${item.workflow_id}', 'deny')">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            Deny & Discard
+                        </button>
+                        <button class="btn-edit-toggle" onclick="toggleEditDraft('${item.workflow_id}')" id="edit-btn-${item.workflow_id}">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            Edit Draft
+                        </button>
+                        <button class="btn-approve" onclick="confirmApproval('${item.workflow_id}')">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Approve & Dispatch
+                        </button>
+                    `}
+                </div>
+            `;
+
+            return card;
+        }
+
+        function toggleEditDraft(workflowId) {
+            const previewEl = document.getElementById(`preview-text-${workflowId}`);
+            const editBox = document.getElementById(`edit-box-${workflowId}`);
+            const editBtn = document.getElementById(`edit-btn-${workflowId}`);
+
+            if (editBox.classList.contains('active')) {
+                editBox.classList.remove('active');
+                previewEl.style.display = 'block';
+                editBtn.innerHTML = `
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Edit Draft
+                `;
+            } else {
+                editBox.classList.add('active');
+                previewEl.style.display = 'none';
+                editBtn.innerHTML = `
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    Preview
+                `;
+                const textarea = document.getElementById(`textarea-${workflowId}`);
+                if (textarea) textarea.focus();
+            }
+        }
+
+        function confirmApproval(workflowId) {
+            const editBox = document.getElementById(`edit-box-${workflowId}`);
+            if (editBox && editBox.classList.contains('active')) {
+                const textarea = document.getElementById(`textarea-${workflowId}`);
+                const editedContent = textarea ? textarea.value : '';
+                submitDecision(workflowId, 'edit', editedContent);
+            } else {
+                submitDecision(workflowId, 'approve');
+            }
+        }
+
+        async function submitDecision(workflowId, decision, editedContent = '') {
+            appendLog(`Submitting decision "${decision}" for workflow ${workflowId}...`, 'info', 'approval');
+
+            const payload = {
                 type: 'human_decision',
                 workflow_id: workflowId,
                 decision: decision,
                 edited_content: editedContent
-            }));
-            
-            addActivity(
-                `Decision sent: ${decision} for workflow #${workflowId}`,
-                (decision === 'deny' || decision === 'ignore') ? 'warning' : 'success'
-            );
-        } else {
-            addActivity('WebSocket not connected!', 'error');
-        }
-    }
-    
-    function addActivity(message, type = 'info') {
-        const feed = document.getElementById('activity-feed');
-        
-        // Remove empty state
-        const emptyState = feed.querySelector('.empty-state');
-        if (emptyState) emptyState.remove();
-        
-        const item = document.createElement('div');
-        item.className = `activity-item activity-${type}`;
-        
-        const time = new Date().toLocaleTimeString();
-        item.innerHTML = `
-            <div>${message}</div>
-            <div class="activity-time">${time}</div>
-        `;
-        
-        feed.insertBefore(item, feed.firstChild);
-        
-        // Limit to 20 items
-        const items = feed.querySelectorAll('.activity-item');
-        if (items.length > 20) {
-            items[items.length - 1].remove();
-        }
-    }
-    
-    function updateStats() {
-        document.getElementById('stat-total').textContent = stats.total;
-        document.getElementById('stat-approved').textContent = stats.approved;
-        document.getElementById('stat-denied').textContent = stats.denied;
-    }
-    
-    function updatePendingCount() {
-        const badge = document.getElementById('pending-count');
-        badge.textContent = pendingCount;
-        badge.style.background = pendingCount > 0 ? '#dc3545' : '#28a745';
-    }
-    
-    async function processEmail() {
-        const emailFrom = document.getElementById('email-from').value;
-        const emailSubject = document.getElementById('email-subject').value;
-        const emailBody = document.getElementById('email-body').value;
-        
-        if (!emailFrom || !emailSubject || !emailBody) {
-            alert('Please fill in all fields');
-            return;
-        }
-        
-        const btn = document.getElementById('process-btn');
-        btn.disabled = true;
-        btn.textContent = '⏳ Processing...';
-        
-        try {
-            const response = await fetch('/process-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email_from: emailFrom,
-                    email_subject: emailSubject,
-                    email_body: emailBody
-                })
-            });
-            
-            const data = await response.json();
-            addActivity(`Started workflow #${data.workflow_id}`, 'info');
-            
-        } catch (error) {
-            addActivity(`Error: ${error.message}`, 'error');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '🚀 Process Email';
-        }
-    }
-    
-    async function fetchHealth() {
-        try {
-            const response = await fetch('/health');
-            const data = await response.json();
-            
-            document.getElementById('health-status').innerHTML = `
-                Agent: ${data.agent_ready ? '✅ Ready' : '❌ Not Ready'} &nbsp;|&nbsp;
-                Gmail: ${data.gmail_connected ? '✅ Connected' : '❌ Not Connected'} &nbsp;|&nbsp;
-                Calendar: ${data.calendar_connected ? '✅ Connected' : '❌ Not Connected'}
-            `;
-        } catch (error) {
-            document.getElementById('health-status').textContent = 'Could not fetch health status';
-        }
-    }
-    
-    // ===== INIT =====
-    connectWebSocket();
-    setInterval(fetchHealth, 30000);
-</script>
+            };
 
+            // 1. Send via WebSocket if connected
+            if (state.ws && state.ws.readyState === WebSocket.OPEN) {
+                state.ws.send(JSON.stringify(payload));
+            } else {
+                // 2. Fallback to REST endpoint
+                try {
+                    await fetch('/decision', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } catch (e) {
+                    console.error('REST decision error:', e);
+                }
+            }
+
+            removeApprovalCard(workflowId);
+
+            if (decision === 'respond') {
+                showToast('🤖 AI is drafting response, please wait...', 'info');
+                appendLog(`Generating AI draft for workflow ${workflowId}...`, 'info', 'react');
+                // Poll pending approvals every 1.5s for 15s until draft appears
+                let attempts = 0;
+                const pollInterval = setInterval(async () => {
+                    attempts++;
+                    await fetchHealthAndStats();
+                    if (state.pendingApprovals.has(workflowId) || attempts >= 10) {
+                        clearInterval(pollInterval);
+                    }
+                }, 1500);
+            } else {
+                showToast(`Decision recorded: ${decision.toUpperCase()}`, 'success');
+            }
+        }
+
+        function updatePendingBadge() {
+            const count = state.pendingApprovals.size;
+            const badge = document.getElementById('tab-approval-badge');
+            const kpiVal = document.getElementById('kpi-pending-count');
+            const kpiCard = document.getElementById('kpi-card-pending');
+            const kpiSub = document.getElementById('kpi-pending-subtext');
+
+            kpiVal.textContent = count;
+            if (count > 0) {
+                badge.style.display = 'inline-block';
+                badge.textContent = count;
+                kpiCard.classList.add('kpi-alert-glow');
+                kpiSub.textContent = `${count} awaiting your decision`;
+            } else {
+                badge.style.display = 'none';
+                kpiCard.classList.remove('kpi-alert-glow');
+                kpiSub.textContent = 'No action required right now';
+            }
+        }
+
+        // ==========================================
+        // MANUAL INBOX SCAN TRIGGER
+        // ==========================================
+        async function triggerManualPoll() {
+            const btn = document.getElementById('btn-scan-inbox');
+            const label = document.getElementById('scan-btn-label');
+            const icon = document.getElementById('scan-icon');
+
+            btn.disabled = true;
+            label.textContent = 'Scanning Gmail...';
+            icon.style.animation = 'spin 1s linear infinite';
+            appendLog('Manual trigger: Polling Gmail inbox for unread messages...', 'info', 'poll');
+
+            try {
+                const res = await fetch('/poll-now', { method: 'POST' });
+                const data = await res.json();
+
+                if (data.status === 'ok') {
+                    showToast(data.message, data.count > 0 ? 'success' : 'info');
+                    appendLog(data.message, data.count > 0 ? 'success' : 'info', 'poll');
+                } else {
+                    showToast(`Scan note: ${data.message}`, 'warning');
+                    appendLog(`Scan note: ${data.message}`, 'warning', 'poll');
+                }
+            } catch (err) {
+                showToast(`Scan failed: ${err.message}`, 'error');
+                appendLog(`Poll error: ${err.message}`, 'error', 'err');
+            } finally {
+                btn.disabled = false;
+                label.textContent = 'Scan Inbox Now';
+                icon.style.animation = '';
+                fetchHealthAndStats();
+            }
+        }
+
+        // ==========================================
+        // DATA FETCHING & KPIS
+        // ==========================================
+        async function fetchInitialData() {
+            await fetchUserProfile();
+            await fetchHealthAndStats();
+            await loadHistoryData();
+            await loadMemoryProfile();
+        }
+
+        async function fetchUserProfile() {
+            try {
+                const res = await fetch('/user-profile');
+                const data = await res.json();
+                if (data.email) {
+                    const email = data.email;
+                    document.getElementById('user-email-text').textContent = email;
+                    const initial = email.charAt(0).toUpperCase();
+                    document.getElementById('user-avatar-text').textContent = initial;
+                }
+            } catch (e) {
+                console.error('Error fetching user profile:', e);
+            }
+        }
+
+        async function fetchHealthAndStats() {
+            try {
+                // 1. Health
+                const hRes = await fetch('/health');
+                const health = await hRes.json();
+                
+                // 2. Stats
+                const sRes = await fetch('/stats');
+                const stats = await sRes.json();
+
+                state.stats = { ...state.stats, ...stats };
+                updateKpis();
+
+                // 3. Pending approvals recovery
+                const pRes = await fetch('/pending-approvals');
+                const pData = await pRes.json();
+                if (pData.approvals && pData.approvals.length > 0) {
+                    pData.approvals.forEach(a => {
+                        state.pendingApprovals.set(a.workflow_id, a);
+                    });
+                    renderApprovalCards();
+                    updatePendingBadge();
+                }
+            } catch (e) {
+                console.error('Error fetching stats:', e);
+            }
+        }
+
+        function updateKpis() {
+            const s = state.stats;
+            document.getElementById('kpi-total-processed').textContent = s.total_emails || 0;
+            document.getElementById('kpi-approved-count').textContent = s.approve_count || 0;
+            document.getElementById('kpi-denied-count').textContent = s.deny_count || 0;
+
+            const totalDecisions = (s.approve_count || 0) + (s.deny_count || 0);
+            const rate = totalDecisions > 0 ? Math.round((s.approve_count / totalDecisions) * 100) : 0;
+            document.getElementById('kpi-approved-rate').textContent = `${rate}% approval rate`;
+
+            document.getElementById('kpi-memory-rules').textContent = s.preferences_count || 5;
+            document.getElementById('kpi-contacts-count').textContent = `${s.senders_count || 1} contact context tracked`;
+        }
+
+        async function loadHistoryData() {
+            const tbody = document.getElementById('history-table-body');
+            try {
+                const res = await fetch('/history?limit=100');
+                const data = await res.json();
+                state.historyRecords = data.history || [];
+
+                document.getElementById('history-count-label').textContent = `Loaded ${state.historyRecords.length} records`;
+                renderHistoryTable(state.historyRecords);
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger); padding: 24px;">Failed to load history: ${e.message}</td></tr>`;
+            }
+        }
+
+        function renderHistoryTable(records) {
+            const tbody = document.getElementById('history-table-body');
+            if (!records || records.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No email history recorded yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = records.map(r => {
+                let badgeDecision = 'badge-neutral';
+                if (r.triage_decision === 'respond') badgeDecision = 'badge-primary';
+                else if (r.triage_decision === 'notify_human') badgeDecision = 'badge-warning';
+                else if (r.triage_decision === 'ignore') badgeDecision = 'badge-info';
+
+                let humanBadge = '<span class="badge-status badge-info">Auto</span>';
+                if (r.human_approved === 1) humanBadge = '<span class="badge-status badge-success">Approved</span>';
+                else if (r.human_approved === 0 && r.action_taken !== 'none') humanBadge = '<span class="badge-status badge-danger">Denied</span>';
+                else if (r.human_approved === 0) humanBadge = '<span class="badge-status badge-neutral">Ignored</span>';
+
+                return `
+                    <tr>
+                        <td><code style="font-family: var(--font-mono); font-size: 11px;">${r.email_id || r.id}</code></td>
+                        <td>
+                            <div class="sender-cell">
+                                <span>${escapeHtml(r.email_from || 'Unknown')}</span>
+                            </div>
+                        </td>
+                        <td style="max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <strong>${escapeHtml(r.email_subject || 'No Subject')}</strong>
+                        </td>
+                        <td><span class="badge-status ${badgeDecision}">${r.triage_decision || 'N/A'}</span></td>
+                        <td><code style="font-family: var(--font-mono); font-size: 11px;">${r.action_taken || 'none'}</code></td>
+                        <td>${humanBadge}</td>
+                        <td style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">${r.timestamp || ''}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterHistoryTable() {
+            const query = (document.getElementById('history-search-input').value || '').toLowerCase();
+            const filtered = state.historyRecords.filter(r => {
+                return (r.email_from && r.email_from.toLowerCase().includes(query)) ||
+                       (r.email_subject && r.email_subject.toLowerCase().includes(query)) ||
+                       (r.triage_decision && r.triage_decision.toLowerCase().includes(query));
+            });
+            renderHistoryTable(filtered);
+        }
+
+        async function loadMemoryProfile() {
+            try {
+                const res = await fetch('/memory-profile');
+                const data = await res.json();
+
+                // 1. Preferences
+                const pillsContainer = document.getElementById('pref-pills-container');
+                const prefs = data.preferences || {};
+                
+                const prefEntries = Object.entries(prefs);
+                if (prefEntries.length > 0) {
+                    pillsContainer.innerHTML = prefEntries.map(([k, v]) => `
+                        <div class="pref-pill">
+                            <span class="pref-pill-label">${escapeHtml(k)}:</span>
+                            <span class="pref-pill-value">${escapeHtml(String(v))}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    pillsContainer.innerHTML = `<span style="font-size: 13px; color: var(--text-muted);">No learned style rules yet. Edit drafts to train agent.</span>`;
+                }
+
+                // 2. Avoid / Prefer Words
+                const avoidContainer = document.getElementById('avoid-words-container');
+                const preferContainer = document.getElementById('prefer-words-container');
+
+                const avoidWords = prefs.avoid_words || ['regards', 'sincerely', 'please let me know'];
+                const preferWords = prefs.prefer_words || ['thanks', 'best', 'sounds good'];
+
+                const avoidArr = Array.isArray(avoidWords) ? avoidWords : [avoidWords];
+                const preferArr = Array.isArray(preferWords) ? preferWords : [preferWords];
+
+                avoidContainer.innerHTML = avoidArr.map(w => `<span class="chip-danger">${escapeHtml(w)}</span>`).join('');
+                preferContainer.innerHTML = preferArr.map(w => `<span class="chip-success">${escapeHtml(w)}</span>`).join('');
+
+                // 3. Senders
+                const sendersTbody = document.getElementById('senders-table-body');
+                const senders = data.senders || [];
+                document.getElementById('senders-total-badge').textContent = `${senders.length} Sender Profile${senders.length === 1 ? '' : 's'}`;
+
+                if (senders.length > 0) {
+                    sendersTbody.innerHTML = senders.map(s => `
+                        <tr>
+                            <td><strong>${escapeHtml(s.sender_email || '')}</strong></td>
+                            <td>${escapeHtml(s.sender_name || '—')}</td>
+                            <td><span class="badge-status badge-info">${escapeHtml(s.relationship || 'colleague')}</span></td>
+                            <td><span class="badge-status badge-primary">${escapeHtml(s.preferred_tone || 'professional')}</span></td>
+                            <td><code>${escapeHtml(s.triage_override || 'auto')}</code></td>
+                            <td>${s.interaction_count || 1}</td>
+                            <td style="font-size: 11px; max-width: 200px; color: var(--text-muted);">${escapeHtml(s.notes || '—')}</td>
+                            <td style="font-family: var(--font-mono); font-size: 11px;">${s.last_interaction || '—'}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    sendersTbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">No contacts tracked yet.</td></tr>`;
+                }
+
+            } catch (e) {
+                console.error('Error loading memory profile:', e);
+            }
+        }
+
+        // ==========================================
+        // UI HELPERS & LOG STREAM
+        // ==========================================
+        function appendLog(message, level = 'info', tag = 'sys') {
+            const container = document.getElementById('stream-log-container');
+            if (!container) return;
+
+            const timeStr = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry level-${level}`;
+            entry.dataset.tag = tag;
+
+            entry.innerHTML = `
+                <span class="log-time">${timeStr}</span>
+                <span class="log-tag tag-${tag}">${tag}</span>
+                <span class="log-msg">${escapeHtml(message)}</span>
+            `;
+
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function filterLogs(filterType, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            const entries = document.querySelectorAll('.log-entry');
+            entries.forEach(e => {
+                if (filterType === 'all' || e.dataset.tag === filterType) {
+                    e.style.display = 'flex';
+                } else {
+                    e.style.display = 'none';
+                }
+            });
+        }
+
+        function clearStreamLog() {
+            const container = document.getElementById('stream-log-container');
+            if (container) container.innerHTML = '';
+        }
+
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+
+            // Nav buttons
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const activeBtn = document.getElementById(`tab-nav-${tabId}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            // Panes
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            const activePane = document.getElementById(`pane-${tabId}`);
+            if (activePane) activePane.classList.add('active');
+
+            if (tabId === 'history') loadHistoryData();
+            if (tabId === 'memory') loadMemoryProfile();
+        }
+
+        function showToast(text, type = 'info') {
+            const wrapper = document.getElementById('toast-wrapper');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+
+            let icon = 'ℹ️';
+            if (type === 'success') icon = '✅';
+            if (type === 'warning') icon = '⚠️';
+            if (type === 'error') icon = '❌';
+
+            toast.innerHTML = `<span>${icon}</span><span>${escapeHtml(text)}</span>`;
+            wrapper.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(8px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const current = body.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', next);
+            showToast(`Theme switched to ${next.toUpperCase()}`);
+        }
+
+        function setupKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                if (e.altKey && e.key.toLowerCase() === 's') {
+                    e.preventDefault();
+                    triggerManualPoll();
+                } else if (e.altKey && e.key.toLowerCase() === 't') {
+                    e.preventDefault();
+                    toggleTheme();
+                } else if (e.altKey && e.key.toLowerCase() === 'a') {
+                    e.preventDefault();
+                    const firstItem = state.pendingApprovals.keys().next().value;
+                    if (firstItem) confirmApproval(firstItem);
+                } else if (e.altKey && e.key.toLowerCase() === 'd') {
+                    e.preventDefault();
+                    const firstItem = state.pendingApprovals.keys().next().value;
+                    if (firstItem) submitDecision(firstItem, 'deny');
+                }
+            });
+        }
+
+        function startUptimeClock() {
+            setInterval(() => {
+                const diff = Math.floor((Date.now() - state.sessionStart) / 1000);
+                const hrs = String(Math.floor(diff / 3600)).padStart(2, '0');
+                const mins = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+                const secs = String(diff % 60).padStart(2, '0');
+                document.getElementById('session-uptime').textContent = `${hrs}:${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Explicit Global Bindings for inline onclick handlers
+        window.switchTab = switchTab;
+        window.triggerManualPoll = triggerManualPoll;
+        window.filterLogs = filterLogs;
+        window.clearStreamLog = clearStreamLog;
+        window.filterHistoryTable = filterHistoryTable;
+        window.loadHistoryData = loadHistoryData;
+        window.confirmApproval = confirmApproval;
+        window.toggleEditDraft = toggleEditDraft;
+        window.submitDecision = submitDecision;
+        window.toggleTheme = toggleTheme;
+    </script>
 </body>
 </html>

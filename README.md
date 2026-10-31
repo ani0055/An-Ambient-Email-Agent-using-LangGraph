@@ -187,7 +187,7 @@ Edit `run_server.py`:
 ```python
 poller = GmailPoller(
     gmail_service=gmail_service,
-    poll_interval=60,      # Check every 60 seconds
+    poll_interval=20,      # Check every 20 seconds
     process_delay=15       # Wait 15s between emails (rate limiting)
 )
 ```

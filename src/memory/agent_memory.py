@@ -457,9 +457,70 @@ class AgentMemory:
             """)
         
         return [dict(row) for row in cursor.fetchall()]
-    
+
+    # ===== STATS & AGGREGATE VIEWS =====
+
+    def get_stats(self) -> Dict:
+        """Get aggregate memory statistics."""
+        cursor = self.conn.cursor()
+        
+        cursor.execute("SELECT COUNT(*) FROM email_history")
+        total_emails = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM email_history WHERE human_approved = 1")
+        approved_count = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM email_history WHERE human_approved = 0 AND action_taken != 'none'")
+        denied_count = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM email_history WHERE triage_decision = 'ignore' OR (human_approved = 0 AND action_taken = 'none')")
+        ignored_count = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM user_preferences")
+        preferences_count = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM sender_context")
+        senders_count = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM feedback_history")
+        feedback_count = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM triage_corrections")
+        corrections_count = cursor.fetchone()[0]
+        
+        return {
+            "total_emails": total_emails,
+            "approve_count": approved_count,
+            "deny_count": denied_count,
+            "ignored_count": ignored_count,
+            "preferences_count": preferences_count,
+            "senders_count": senders_count,
+            "feedback_count": feedback_count,
+            "corrections_count": corrections_count
+        }
+
+    def get_all_history(self, limit: int = 50) -> List[Dict]:
+        """Get recent email history across all senders."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT * FROM email_history 
+            ORDER BY timestamp DESC 
+            LIMIT ?
+        """, (limit,))
+        return [dict(row) for row in cursor.fetchall()]
+
+    def get_all_senders(self, limit: int = 50) -> List[Dict]:
+        """Get all sender profiles."""
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            SELECT * FROM sender_context 
+            ORDER BY last_interaction DESC 
+            LIMIT ?
+        """, (limit,))
+        return [dict(row) for row in cursor.fetchall()]
+
     # ===== CONTEXT RETRIEVAL =====
-    
+
     def get_full_context(self, sender_email: str) -> Dict:
         """
         Get complete context for decision making.
@@ -472,7 +533,7 @@ class AgentMemory:
             "past_feedback": self.get_past_feedback(),
             "triage_corrections": self.get_triage_corrections(sender_email)
         }
-    
+
     def close(self):
         """Close database connection."""
         self.conn.close()

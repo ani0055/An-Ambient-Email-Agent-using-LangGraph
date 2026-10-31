@@ -17,13 +17,13 @@ class GmailPoller:
     Processes each email through a callback function.
     """
     
-    def __init__(self, gmail_service, poll_interval: int = 60):
+    def __init__(self, gmail_service, poll_interval: int = 20):
         """
         Initialize Gmail poller.
         
         Args:
             gmail_service: Authenticated Gmail API service
-            poll_interval: Seconds between checks (default: 60)
+            poll_interval: Seconds between checks (default: 20)
         """
         self.gmail = gmail_service
         self.poll_interval = poll_interval

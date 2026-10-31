@@ -26,7 +26,7 @@ async def _set_event(event):
     """Helper to set an event from a coroutine."""
     event.set()
 
-app = FastAPI(title="Email Agent HITL Interface")
+app = FastAPI(title="MailMind HITL Interface")
 
 templates = Jinja2Templates(directory="ui/templates")
 
@@ -42,12 +42,15 @@ gmail_service = None
 calendar_service = None
 
 
+ui_loop = None
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
-    global agent, gmail_service, calendar_service
+    global agent, gmail_service, calendar_service, ui_loop
+    ui_loop = asyncio.get_running_loop()
     
-    print("\n🚀 Starting Email Agent HITL Server...")
+    print("\n🚀 Starting Email Agent HITL Server...", flush=True)
     
     try:
         # ✅ Initialize memory system FIRST
@@ -70,9 +73,50 @@ async def get_ui(request: Request):
     return templates.TemplateResponse(request, "index.html", {})
 
 
+async def record_human_decision(workflow_id: str, decision: str, edited_content: str = ""):
+    """Record human decision and unblock waiting LangGraph workflow."""
+    print(f"\n👤 Human decision received:")
+    print(f"   Workflow: {workflow_id}")
+    print(f"   Decision: {decision}")
+    
+    # Store the decision
+    approval_decisions[workflow_id] = {
+        "decision": decision,
+        "edited_content": edited_content,
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    # Signal the waiting workflow
+    if workflow_id in approval_events:
+        if background_loop:
+            # Schedule the set on the background loop
+            asyncio.run_coroutine_threadsafe(
+                _set_event(approval_events[workflow_id]),
+                background_loop
+            )
+            print(f"   🔔 Scheduled event set for {workflow_id}")
+        else:
+            # Fallback
+            approval_events[workflow_id].set()
+    
+    # Remove from pending
+    if workflow_id in pending_approvals:
+        del pending_approvals[workflow_id]
+    
+    # Notify all clients
+    await broadcast_message({
+        "type": "decision_recorded",
+        "workflow_id": workflow_id,
+        "decision": decision
+    })
+    return {"status": "success", "workflow_id": workflow_id, "decision": decision}
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """WebSocket for real-time updates."""
+    global ui_loop
+    ui_loop = asyncio.get_running_loop()
     await websocket.accept()
     websocket_connections.append(websocket)
     
@@ -89,45 +133,11 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             message = json.loads(data)
             
-            if message["type"] == "human_decision":
+            if message.get("type") == "human_decision":
                 workflow_id = message["workflow_id"]
                 decision = message["decision"]
                 edited_content = message.get("edited_content", "")
-                
-                print(f"\n👤 Human decision received:")
-                print(f"   Workflow: {workflow_id}")
-                print(f"   Decision: {decision}")
-                
-                # Store the decision
-                approval_decisions[workflow_id] = {
-                    "decision": decision,
-                    "edited_content": edited_content,
-                    "timestamp": datetime.now().isoformat()
-                }
-                
-                # Signal the waiting workflow
-                if workflow_id in approval_events:
-                    if background_loop:
-                        # Schedule the set on the background loop
-                        asyncio.run_coroutine_threadsafe(
-                            _set_event(approval_events[workflow_id]),
-                            background_loop
-                        )
-                        print(f"   🔔 Scheduled event set for {workflow_id}")
-                    else:
-                        # Fallback (should not happen)
-                        approval_events[workflow_id].set()
-                
-                # Remove from pending
-                if workflow_id in pending_approvals:
-                    del pending_approvals[workflow_id]
-                
-                # Notify all clients
-                await broadcast_message({
-                    "type": "decision_recorded",
-                    "workflow_id": workflow_id,
-                    "decision": decision
-                })
+                await record_human_decision(workflow_id, decision, edited_content)
     
     except WebSocketDisconnect:
         websocket_connections.remove(websocket)
@@ -137,17 +147,40 @@ async def websocket_endpoint(websocket: WebSocket):
             websocket_connections.remove(websocket)
 
 
-async def broadcast_message(message: dict):
-    """Send message to all connected clients."""
+async def _send_to_all_websockets(message: dict):
     disconnected = []
-    for ws in websocket_connections:
+    for ws in list(websocket_connections):
         try:
             await ws.send_json(message)
-        except Exception:
+        except Exception as e:
+            print(f"⚠️ WebSocket send error: {e}", flush=True)
             disconnected.append(ws)
-    
     for ws in disconnected:
-        websocket_connections.remove(ws)
+        if ws in websocket_connections:
+            websocket_connections.remove(ws)
+
+
+async def broadcast_message(message: dict):
+    """Send message to all connected clients safely across event loops."""
+    global ui_loop
+    if not websocket_connections:
+        return
+    try:
+        current_loop = asyncio.get_running_loop()
+    except RuntimeError:
+        current_loop = None
+
+    if ui_loop and current_loop != ui_loop:
+        try:
+            future = asyncio.run_coroutine_threadsafe(
+                _send_to_all_websockets(message),
+                ui_loop
+            )
+            await asyncio.wait_for(asyncio.wrap_future(future), timeout=3.0)
+        except Exception as e:
+            print(f"⚠️ Error dispatching broadcast to UI loop: {e}", flush=True)
+    else:
+        await _send_to_all_websockets(message)
 
 
 @app.post("/process-email")
@@ -200,6 +233,7 @@ async def run_agent_workflow(workflow_id: str, email_data: dict):
     Run the agent workflow asynchronously.
     Handles HITL pause/resume and notify_human.
     """
+    print(f"\n🚀 [Workflow {workflow_id}] Starting agent for: '{email_data.get('email_subject')}'", flush=True)
     try:
         config = {
             "configurable": {
@@ -209,10 +243,12 @@ async def run_agent_workflow(workflow_id: str, email_data: dict):
         
         # Phase 1: Run until HITL checkpoint or triage decision
         loop = asyncio.get_event_loop()
+        print(f"   ⏳ [Workflow {workflow_id}] Invoking LangGraph agent (memory -> triage -> react)...", flush=True)
         result = await loop.run_in_executor(
             None,
             lambda: agent.invoke(email_data, config)
         )
+        print(f"   ✅ [Workflow {workflow_id}] LangGraph initial phase finished!", flush=True)
         
         # Get triage decision
         triage_decision = result.get("triage_decision", "")
@@ -565,34 +601,174 @@ async def health_check():
 
 @app.get("/stats")
 async def get_stats():
-    """Get memory statistics including deny counts."""
+    """Get memory statistics including approve, deny, and pending counts."""
     from src.nodes.memory import get_memory
     
     memory = get_memory()
     if not memory:
-        return {"error": "Memory not initialized"}
+        return {
+            "total_emails": 0,
+            "approve_count": 0,
+            "deny_count": 0,
+            "ignored_count": 0,
+            "preferences_count": 0,
+            "senders_count": 0,
+            "feedback_count": 0,
+            "corrections_count": 0,
+            "pending_count": len(pending_approvals)
+        }
     
-    stats = memory.get_stats()
+    try:
+        stats = memory.get_stats()
+        return {
+            **stats,
+            "pending_count": len(pending_approvals)
+        }
+    except Exception as e:
+        print(f"Error getting stats: {e}")
+        return {
+            "total_emails": 0,
+            "approve_count": 0,
+            "deny_count": 0,
+            "pending_count": len(pending_approvals),
+            "error": str(e)
+        }
+
+
+@app.post("/decision")
+async def post_decision(request: Request):
+    """REST endpoint for submitting a human approval decision."""
+    body = await request.json()
+    workflow_id = body.get("workflow_id")
+    decision = body.get("decision")
+    edited_content = body.get("edited_content", "")
     
-    # ✅ Calculate deny count
-    cursor = memory.conn.execute("""
-        SELECT COUNT(*) 
-        FROM email_history 
-        WHERE human_approved = 0 AND action_taken != 'none'
-    """)
-    deny_count = cursor.fetchone()[0]
+    if not workflow_id or not decision:
+        return {"status": "error", "message": "workflow_id and decision are required"}
+        
+    return await record_human_decision(workflow_id, decision, edited_content)
+
+
+@app.get("/history")
+async def get_history(limit: int = 50):
+    """Get recent email interaction history from memory."""
+    from src.nodes.memory import get_memory
+    memory = get_memory()
+    if not memory:
+        return {"history": []}
+    try:
+        history = memory.get_all_history(limit=limit)
+        return {"history": history}
+    except Exception as e:
+        return {"history": [], "error": str(e)}
+
+
+@app.get("/memory-profile")
+async def get_memory_profile():
+    """Get learned user preferences, sender contexts, past feedback and corrections."""
+    from src.nodes.memory import get_memory
+    memory = get_memory()
+    if not memory:
+        return {
+            "preferences": {},
+            "senders": [],
+            "feedback": [],
+            "corrections": []
+        }
+    try:
+        return {
+            "preferences": memory.get_preferences(),
+            "senders": memory.get_all_senders(limit=50),
+            "feedback": memory.get_past_feedback(limit=20),
+            "corrections": memory.get_triage_corrections()
+        }
+    except Exception as e:
+        return {
+            "preferences": {},
+            "senders": [],
+            "feedback": [],
+            "corrections": [],
+            "error": str(e)
+        }
+
+
+@app.get("/user-profile")
+async def get_user_profile():
+    """Get authenticated Google account profile."""
+    global gmail_service
+    if not gmail_service:
+        return {"email": "Google Connected", "messages_total": 0}
+    try:
+        profile = gmail_service.users().getProfile(userId='me').execute()
+        return {
+            "email": profile.get("emailAddress", "Connected User"),
+            "messages_total": profile.get("messagesTotal", 0),
+            "threads_total": profile.get("threadsTotal", 0)
+        }
+    except Exception as e:
+        return {"email": "Connected User", "error": str(e)}
+
+
+@app.post("/poll-now")
+async def poll_now():
+    """Trigger an immediate inbox poll for unread emails."""
+    global gmail_service
+    if not gmail_service:
+        return {"status": "error", "message": "Gmail service is not authenticated or ready"}
     
-    # Calculate approve count
-    cursor = memory.conn.execute("""
-        SELECT COUNT(*) 
-        FROM email_history 
-        WHERE human_approved = 1
-    """)
-    approve_count = cursor.fetchone()[0]
-    
-    return {
-        **stats,
-        "deny_count": deny_count,
-        "approve_count": approve_count,
-        "pending_count": len(pending_approvals)
-    }
+    try:
+        from gmail_poller import GmailPoller
+        poller = GmailPoller(gmail_service=gmail_service)
+        unread = poller.fetch_unread_emails()
+        
+        if not unread:
+            return {
+                "status": "ok", 
+                "message": "Inbox checked: No unread emails found.", 
+                "count": 0
+            }
+        
+        queued = []
+        for email_data in unread:
+            agent_input = {
+                "email_id": email_data['id'],
+                "email_from": email_data['from'],
+                "email_to": email_data.get('to', 'you@company.com'),
+                "email_subject": email_data['subject'],
+                "email_body": email_data['body'],
+                "user_preferences": {},
+                "messages": [],
+                "requires_approval": False,
+                "human_decision": None,
+                "pending_action": None,
+                "workflow_id": email_data['id']
+            }
+            
+            # Run concurrently in background loop if available, else async task
+            if background_loop:
+                asyncio.run_coroutine_threadsafe(
+                    run_agent_workflow(workflow_id=email_data['id'], email_data=agent_input),
+                    background_loop
+                )
+            else:
+                asyncio.create_task(
+                    run_agent_workflow(workflow_id=email_data['id'], email_data=agent_input)
+                )
+            
+            poller.mark_as_read(email_data['id'])
+            queued.append({
+                "id": email_data['id'],
+                "from": email_data['from'],
+                "subject": email_data['subject']
+            })
+            
+        return {
+            "status": "ok",
+            "message": f"Successfully pulled and initiated processing for {len(queued)} new email(s)",
+            "count": len(queued),
+            "emails": queued
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "message": f"Polling failed: {str(e)}"}

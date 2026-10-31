@@ -1,10 +1,18 @@
+import os
+from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from src.agents.state import EmailAgentState
 
+load_dotenv()
+
+model_name = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3.6-flash",
+    model=model_name,
     temperature=0,
+    timeout=45,
+    max_retries=2,
     convert_system_message_to_human=True
 )
 
@@ -172,29 +180,35 @@ def triage_node(state: EmailAgentState) -> EmailAgentState:
         memory_context=memory_context
     )
     
-    # Invoke LLM
-    response = llm.invoke(prompt_text)
-    content = response.content
-    
-    # Parse response
+    print(f"\n🤔 TRIAGE: Classifying email '{state.get('email_subject')}' with model {model_name}...", flush=True)
+
+    # Invoke LLM with error handling and fallback
     decision = None
     reasoning = None
 
-    content = extract_text_content(response.content)
-    for line in content.strip().split('\n'):
-        if "DECISION:" in line:
-            decision = line.split(":", 1)[1].strip().lower()
-        elif "REASONING:" in line:
-            reasoning = line.split(":", 1)[1].strip()
-    
+    try:
+        response = llm.invoke(prompt_text)
+        content = extract_text_content(response.content)
+        for line in content.strip().split('\n'):
+            if "DECISION:" in line:
+                decision = line.split(":", 1)[1].strip().lower()
+            elif "REASONING:" in line:
+                reasoning = line.split(":", 1)[1].strip()
+    except Exception as e:
+        print(f"❌ Error invoking LLM for triage: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        decision = "notify_human"
+        reasoning = f"Defaulted to notify_human due to LLM error: {str(e)}"
+
     # Validate decision
     if decision not in ["ignore", "notify_human", "respond"]:
-        print(f"⚠️ Invalid decision '{decision}', defaulting to respond")
+        print(f"⚠️ Invalid decision '{decision}', defaulting to respond", flush=True)
         decision = "respond"
         reasoning = "Failed to parse, defaulting to respond to be helpful"
     
     # Clean output
-    print(f"📋 TRIAGE: {decision.upper()}")
+    print(f"📋 TRIAGE: {decision.upper()}", flush=True)
     
     # Show context usage
     if sender_context:
